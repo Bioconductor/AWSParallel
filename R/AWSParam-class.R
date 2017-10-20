@@ -1,8 +1,23 @@
+#' Reference class .AWSParam that allows usage of AWS EC2-instances
+#'
+#' The .AWSParam class extends the BiocParallelParam class
+#' to allow usage of AWS EC2-instances for parallel computation.
+#' The methods follow a style similar to that of BiocParallelParams,
+#' with bpstart, bpstop, bpisup, bplapply being the important one.
+#'
+#' @field awsCredentialsPath Path to AWS credentials, default value is `~/.aws/credentials`
+#' @field awsInstanceType Type of AWS EC2-instance, eg. t2.micro
+#' @field awsSubnet AWS EC2-instance subnet, within a certain VPC
+#' @field awsSecurityGroup Secutiry group which assigns inbound and outbound traffic at the instance level
+#' @field awsInstance A list, created holding all the information of the AWS instance
+#' @field awsAmiId AMI(amazon machine image) ID for the Bioconductor-release version
+#' @field awsSshKeyPair SSH key pair, to associate with your AWS EC2-instance
+#' @importFrom BiocParallel BiocParallelParam
 .AWSParam <- setRefClass("AWSParam",
-#    contains = "BiocParallelParam",
+   contains = "BiocParallelParam",
     fields = list(
         awsCredentialsPath = "character",
-        awsInstanceType = "character", ## instance type i.e "t2.micro"
+        awsInstanceType = "character",
         awsSubnet = "character",
         awsSecurityGroup = "character",
         awsInstance = "list",
@@ -19,7 +34,7 @@
              awsSshKeyPair = NA_character_
              )
         {
-            # callSuper(...)
+            callSuper(...)
             initFields(
                 awsCredentialsPath = awsCredentialsPath,
                 awsInstanceType = awsInstanceType,
@@ -30,7 +45,7 @@
             )
         },
         show = function() {
-            # callSuper()
+            callSuper()
             ## Display only half of AWS access and secret keys
             cat("  awsCredentialsPath: ",
                 awsCredentialsPath(.self),
@@ -50,21 +65,52 @@
     )
 )
 
-## Get name of bioconductor release version AMI
-.getAwsAmiId <-
-    function()
+
+#' Get name of bioconductor release version AMI
+#'
+#' @return Bioconductor release version
+#' @importFrom httr GET
+#' @importFrom httr content
+#' @importFrom yaml yaml.load
+#' @importFrom httr stop_for_status
+#' @export
+getAwsAmiId <- function()
 {
-    res <- httr::GET("https://www.bioconductor.org/config.yaml")
-    httr::stop_for_status(res)
-    content <- httr::content(res, type="text", encoding="UTF-8")
-    txt <- yaml::yaml.load(content)
+    res <- GET("https://www.bioconductor.org/config.yaml")
+    stop_for_status(res)
+    content <- content(res, type="text", encoding="UTF-8")
+    txt <- yaml.load(content)
     release_version <- sub(".", "_", txt$release_version, fixed=TRUE)
     txt$ami_ids[[paste0("bioc",release_version)]]
 }
 
 
-AWSParam <-
-    function(workers = 1,
+#' AWSParam function to start an AWS EC2-instance cluster
+#'
+#' This function starts a cluster of AWS EC2-instances to allow
+#' parallel computation of R objects, and works with BiocParallel,
+#' to allow computation with Bioconductor objects
+#'
+#' @param workers Numeric, number of workers to launch in the cluster
+#' @param awsCredentialsPath character, Path to AWS credentials, default value is `~/.aws/credentials`
+#' @param awsInstanceType character, Type of AWS EC2-instance, eg. t2.micro
+#' @param awsSubnet character, AWS EC2-instance subnet, within a certain VPC
+#' @param awsSecurityGroup character, Secutiry group which assigns inbound and outbound traffic at the instance level
+#' @param awsAmiId character, AMI(amazon machine image) ID for the Bioconductor-release version
+#' @param awsSshKeyPair character, SSH key pair, to associate with your AWS EC2-instance
+#' @return
+#' @example
+#' \dontrun{
+#' aws <- AWSParam(workers = 1,
+#'                awsInstanceType="t2.micro",
+#'                awsSubnet = subnet,
+#'                awsSecurityGroup = sg,
+#'                awsAmiId= image,
+#'                awsSshKeyPair = "~/.ssh/bioc-default.pem")
+#' }
+#'
+#' @exportClass AWSParam
+AWSParam <- function(workers = 1,
              awsCredentialsPath = NA_character_,
              awsInstanceType = NA_character_,
              awsSubnet = NA,
@@ -73,11 +119,13 @@ AWSParam <-
              awsSshKeyPair = NA_character_
              )
 {
+    ## Validate AWS Credentials Path
     if (is.na(awsCredentialsPath)) {
         if (.Platform$OS.type == "unix") {
             awsCredentialsPath = "~/.aws/credentials"
         } else {
             ## FIXME: Windows %USERPROFILE%.awscredentials
+            message("TODO: Windows machine needs path for credentials")
         }
     }
     stopifnot(
@@ -89,9 +137,9 @@ AWSParam <-
     )
     ## If missing, default to release version of AMI
     if (missing(awsAmiId)) {
-        awsAmiId <- .getAwsAmiId()
+        awsAmiId <- getAwsAmiId()
     }
-
+    ## Initiate .AWSParam class
     .AWSParam(
         workers = workers,
         awsCredentialsPath = awsCredentialsPath,
@@ -108,6 +156,10 @@ AWSParam <-
 ### Accessors
 ###
 
+#' Get path to AWS credentials
+#'
+#' @param AWSParam object
+#'
 #' @export
 awsCredentialsPath <-
     function(x)
@@ -115,6 +167,10 @@ awsCredentialsPath <-
     x$awsCredentialsPath
 }
 
+#' Get number of workers in the cluster
+#'
+#' @param AWSParam object
+#'
 #' @export
 awsWorkers <-
     function(x)
@@ -122,6 +178,10 @@ awsWorkers <-
     x$workers
 }
 
+#' Get AWS instance attributes in a list
+#'
+#' @param AWSParam object
+#'
 #' @export
 awsInstance <-
     function(x)
@@ -129,14 +189,25 @@ awsInstance <-
     x$awsInstance
 }
 
-## TODO: Documentation about which instance type works
+
+#' Get AWS Instance type.
+#'
+#' The possible instance types are listed in the document:https://aws.amazon.com/ec2/instance-types/. The Bioconductor AMI's have been built using an m4.xlarge instance type. Large computations are best supported on this type of instance.
+#'
+#' @param AWSParam object
+#'
+#' @return character
 #' @export
 awsInstanceType <-
     function(x)
-    {
-        x$awsInstanceType
-    }
+{
+    x$awsInstanceType
+}
 
+#' Get AWS AMI-ID of the launched instance
+#'
+#' @param AWSParam
+#'
 #' @export
 awsAmiId <-
     function(x)
@@ -144,6 +215,10 @@ awsAmiId <-
     x$awsAmiId
 }
 
+#' Get AWS Subnet within which the AWS EC2 instance was launched
+#'
+#' @param AWSParam
+#'
 #' @export
 awsSubnet <-
      function(x)
@@ -151,6 +226,11 @@ awsSubnet <-
      x$awsSubnet
  }
 
+
+#' Get the SSH public key path associted to the AWS EC2 instance.
+#'
+#' @param AWSParam
+#'
 #' @export
 awsSshKeyPair <-
     function(x)
@@ -158,6 +238,11 @@ awsSshKeyPair <-
     x$awsSshKeyPair
     }
 
+#' Get AWS Security group for the EC2 instance, which defines inbound and
+#' outbound traffic.
+#'
+#' @param AWSParam
+#'
 #' @export
 awsSecurityGroup <-
     function(x)
@@ -169,6 +254,9 @@ awsSecurityGroup <-
 ### Methods - control
 ###
 
+#' Create a local enviroment to store the cluster created. This allows for
+#' only a single AWSParam object to be present at a time.
+#'
 .awsCluster <- local({
     cl <- NULL
     list(
@@ -188,8 +276,14 @@ awsSecurityGroup <-
     )
 })
 
+#' Get the AWSParam object currently launched. Only one AWSParam object can be
+#' started within one session.
+#'
+#' @return AWSParam object
 #' @export
-awsCluster <- function() {
+awsCluster <-
+    function()
+{
     if (!.awsCluster$isup()) {
         stop("no existing cluster")
     }
@@ -199,39 +293,40 @@ awsCluster <- function() {
 
 #' @importFrom aws.ec2 run_instances
 #' @importFrom aws.signature use_credentials
+#' @exportMethod bpstart
 setMethod("bpstart", "AWSParam",
     function(x)
-    {
-        if (.awsCluster$isup())
-            stop(
-                "use 'bpstop(awsCluster())' to shut down existing AWS cluster",
-                call. = FALSE
-            )
-        use_credentials()
-        ## Set awsBiocVersion, devel vs release
-
-        result <- run_instances(
-            image=awsAmiId(x),
-            type=awsInstanceType(x),
-            min=awsWorkers(x),
-            subnet=awsSubnet(x),
-            sgroup=awsSecurityGroup(x)
+{
+    if (.awsCluster$isup())
+        stop(
+            "use 'bpstop(awsCluster())' to shut down existing AWS cluster",
+            call. = FALSE
         )
-        ## Print instance state to screen after starting instance
-        x$awsInstance <- result
-        .awsCluster$set(x)
-        ## Wait for instance to be up.
-        message("starting...", appendLF = FALSE)
-        repeat{
-            if (bpisup(x)) {
-                break
-            }
-            message(".", appendLF = FALSE)
-            Sys.sleep(1)
+    use_credentials()
+    ## Set awsBiocVersion, devel vs release
+
+    result <- run_instances(
+        image=awsAmiId(x),
+        type=awsInstanceType(x),
+        min=awsWorkers(x),
+        subnet=awsSubnet(x),
+        sgroup=awsSecurityGroup(x)
+    )
+    ## Print instance state to screen after starting instance
+    x$awsInstance <- result
+    .awsCluster$set(x)
+    ## Wait for instance to be up.
+    message("starting...", appendLF = FALSE)
+    repeat{
+        if (bpisup(x)) {
+            break
         }
-        message(.awsInstanceStatus(x))
-        invisible(x)
-    })
+        message(".", appendLF = FALSE)
+        Sys.sleep(1)
+    }
+    message(.awsInstanceStatus(x))
+    invisible(x)
+})
 
 
 # Check status of aws ec2 instance
@@ -254,47 +349,40 @@ setMethod("bpstart", "AWSParam",
 
 
 #' @importFrom aws.ec2 terminate_instances
+#' @exportMethod bpstop
 setMethod("bpstop", "AWSParam",
     function(x)
-    {
-        if (bpisup(x)) {
-            result <- terminate_instances(x$awsInstance)
-            message("stopping...", appendLF = FALSE)
-            repeat {
-                if (!bpisup(x))
-                    break
-                message(".", appendLF = FALSE)
-            }
-            message("terminated")
-            ## TODO: Fix this
-            .awsCluster$reset()
+{
+    if (bpisup(x)) {
+        result <- terminate_instances(x$awsInstance)
+        message("stopping...", appendLF = FALSE)
+        repeat {
+            if (!bpisup(x))
+                break
+            message(".", appendLF = FALSE)
         }
-        ## Return terminated instance state to screen
-        x$awsInstance <- list()
-        invisible(x)
-    })
+        message("terminated")
+        ## TODO: Fix this
+        .awsCluster$reset()
+    }
+    ## Return terminated instance state to screen
+    x$awsInstance <- list()
+    invisible(x)
+})
 
-
+#' @exportMethod bpisup
 setMethod("bpisup", "AWSParam",
     function(x)
-    {
-        .awsInstanceStatus(x) == "running"
-    })
-
-
-## TODO: What does bpworkers need to do?
-## setMethod("bpworkers", "AWSParam",
-##           function(x)
-##     {
-##          x$workers
-##     })
+{
+    .awsInstanceStatus(x) == "running"
+})
 
 
 ### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Methods - evaluation
 ###
 
-
+#' @exportMethod bplapply
 setMethod("bplapply", c("ANY","AWSParam"),
     function(X, FUN, ..., BPREDO = list(), BPPARAM = bpparam())
 {
@@ -310,10 +398,16 @@ setMethod("bplapply", c("ANY","AWSParam"),
 }
 
 
-## Make socket connection by calling SnowParam
+#' Make socket connection by calling SnowParam
+#'
+#' @param AWSParam Object of class AWSParams
+#'
+#' @return SnowParam object
+#'
 #' @importFrom BiocParallel SnowParam
 #' @importFrom aws.ec2 my_ip
-.awsSnowParamCall <- function(x)
+#' @export
+awsSnowParamCall <- function(x)
 {
     ips <- .awsClusterIps(x)
     param = SnowParam(
