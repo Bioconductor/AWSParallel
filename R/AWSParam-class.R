@@ -12,7 +12,7 @@
 #' @field awsInstance A list, created holding all the information of the AWS instance
 #' @field awsAmiId AMI(amazon machine image) ID for the Bioconductor-release version
 #' @field awsSshKeyPair SSH key pair, to associate with your AWS EC2-instance
-#' @importFrom BiocParallel BiocParallelParam
+#' @importClassesFrom BiocParallel BiocParallelParam
 .AWSParam <- setRefClass("AWSParam",
    contains = "BiocParallelParam",
     fields = list(
@@ -99,7 +99,7 @@ getAwsAmiId <- function()
 #' @param awsAmiId character, AMI(amazon machine image) ID for the Bioconductor-release version
 #' @param awsSshKeyPair character, SSH key pair, to associate with your AWS EC2-instance
 #' @return
-#' @example
+#' @examples
 #' \dontrun{
 #' aws <- AWSParam(workers = 1,
 #'                awsInstanceType="t2.micro",
@@ -293,6 +293,7 @@ awsCluster <-
 
 #' @importFrom aws.ec2 run_instances
 #' @importFrom aws.signature use_credentials
+#' @importFrom BiocParallel bpstart
 #' @exportMethod bpstart
 setMethod("bpstart", "AWSParam",
     function(x)
@@ -349,6 +350,7 @@ setMethod("bpstart", "AWSParam",
 
 
 #' @importFrom aws.ec2 terminate_instances
+#' @importFrom BiocParallel bpstop
 #' @exportMethod bpstop
 setMethod("bpstop", "AWSParam",
     function(x)
@@ -390,7 +392,7 @@ setMethod("bplapply", c("ANY","AWSParam"),
 })
 
 
-#' @importFrom aws.ec2 decribe_instances
+#' @importFrom aws.ec2 describe_instances
 .awsClusterIps <- function(x)
 {
     instances <- describe_instances(awsInstance(x))
@@ -422,3 +424,5 @@ awsSnowParamCall <- function(x)
     )
     param
 }
+
+

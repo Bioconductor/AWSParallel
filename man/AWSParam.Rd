@@ -28,3 +28,14 @@ This function starts a cluster of AWS EC2-instances to allow
 parallel computation of R objects, and works with BiocParallel,
 to allow computation with Bioconductor objects
 }
+\examples{
+\dontrun{
+aws <- AWSParam(workers = 1,
+               awsInstanceType="t2.micro",
+               awsSubnet = subnet,
+               awsSecurityGroup = sg,
+               awsAmiId= image,
+               awsSshKeyPair = "~/.ssh/bioc-default.pem")
+}
+
+}
