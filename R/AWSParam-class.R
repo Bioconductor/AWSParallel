@@ -1,7 +1,3 @@
-.snowHost <- BiocParallel:::.snowHost
-
-.snowPort <- BiocParallel:::.snowPort
-
 #' Reference class .AWSParam that allows usage of AWS EC2-instances
 #'
 #' The .AWSParam class extends the BiocParallelParam class
@@ -17,8 +13,9 @@
 #' @field awsAmiId AMI(amazon machine image) ID for the Bioconductor-release version
 #' @field awsSshKeyPair SSH key pair, to associate with your AWS EC2-instance
 #' @importClassesFrom BiocParallel SnowParam BiocParallelParam
-.AWSParam <- setRefClass("AWSParam",
-   contains = "SnowParam",
+.AWSParam <- setRefClass(
+    "AWSParam",
+    contains = "SnowParam",
     fields = list(
         awsCredentialsPath = "character",
         awsInstanceType = "character",
@@ -47,7 +44,8 @@
                 "\n",
                 sep = "")
         }
-    )
+    ),
+    inheritPackage = TRUE
 )
 
 
@@ -135,24 +133,31 @@ AWSParam <- function(workers = 1,
     if (missing(awsAmiId)) {
         awsAmiId <- getAwsAmiId()
     }
+
+    .clusterargs <- list(
+        spec = workers, type = "SOCK",
+        rshcmd = paste("ssh -i", awsSshKeyPair, "-v", sep=" "),
+        user=user,
+        rhome=rhome,
+        snowlib = snowlib,
+        rscript = rscript,
+        outfile = outfile
+    )
+
     ## Initiate .AWSParam class
-    x <- .AWSParam(workers = workers,
-                   awsCredentialsPath = awsCredentialsPath,
-                   awsInstanceType = awsInstanceType,
-                   awsSubnet = awsSubnet,
-                   awsSecurityGroup = awsSecurityGroup,
-                   awsAmiId = awsAmiId,
-                   awsSshKeyPair = awsSshKeyPair,
-                   rshcmd = paste("ssh -i", awsSshKeyPair, "-v", sep=" "),
-                   ## User params
-                   user=user,
-                   rhome=rhome,
-                   snowlib = snowlib,
-                   rscript = rscript,
-                   outfile = outfile,
-                   ## My IP
-                   master = my_ip()
-                   )
+    x <- .AWSParam(
+        ## base class (SnowParam) fields
+        workers = workers,
+        hostname = my_ip(),
+        .clusterargs = .clusterargs,
+        ## AWSParam fields
+        awsCredentialsPath = awsCredentialsPath,
+        awsInstanceType = awsInstanceType,
+        awsSubnet = awsSubnet,
+        awsSecurityGroup = awsSecurityGroup,
+        awsAmiId = awsAmiId,
+        awsSshKeyPair = awsSshKeyPair
+    )
     validObject(x)
     x
 }
@@ -331,13 +336,13 @@ setMethod("bpstart", "AWSParam",
     ## Wait for instance to be up.
     message("starting...", appendLF = FALSE)
     repeat{
-        if (bpisup(x)) {
+        if (.awsisup(x)) {
             break
         }
         message(".", appendLF = FALSE)
         Sys.sleep(1)
     }
-    message(.awsInstanceStatus(x))
+    message(awsInstanceStatus(x))
     ## start cluster
     bpworkers(x) <- .awsClusterIps(x)
     callNextMethod(x)
@@ -346,7 +351,8 @@ setMethod("bpstart", "AWSParam",
 
 # Check status of aws ec2 instance
 #' @importFrom aws.ec2 instance_status
-.awsInstanceStatus <-
+#' @export
+awsInstanceStatus <-
     function(x)
 {
     instance <- awsInstance(x)
@@ -362,6 +368,11 @@ setMethod("bpstart", "AWSParam",
     }
 }
 
+.awsisup <-
+    function(x)
+{
+    awsInstanceStatus(x) == "running"
+}
 
 #' @importFrom aws.ec2 terminate_instances
 #' @importFrom BiocParallel bpstop
@@ -369,11 +380,11 @@ setMethod("bpstart", "AWSParam",
 setMethod("bpstop", "AWSParam",
     function(x)
 {
-    if (bpisup(x)) {
+    if (.awsisup(x)) {
         result <- terminate_instances(x$awsInstance)
         message("stopping...", appendLF = FALSE)
         repeat {
-            if (!bpisup(x))
+            if (!.awsisup(x))
                 break
             message(".", appendLF = FALSE)
         }
@@ -384,14 +395,6 @@ setMethod("bpstop", "AWSParam",
     ## Return terminated instance state to screen
     x$awsInstance <- list()
     invisible(x)
-})
-
-#' @importFrom BiocParallel bpisup
-#' @exportMethod bpisup
-setMethod("bpisup", "AWSParam",
-    function(x)
-{
-    .awsInstanceStatus(x) == "running"
 })
 
 

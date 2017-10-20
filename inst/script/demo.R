@@ -8,18 +8,9 @@ image <-  "ami-9fe2fee4"
 #sg <- "sg-748dcd07"
 ## (val)Security group SSH open to the world
 sg <- "sg-52b65822"
-
 ## Security group open to the world TCP
 ## sg <- "sg-b6884c20"
-
-
 subnet <- "subnet-d66a05ec"
-
-
-##access_key = strsplit(readLines("~/.aws/credentials"), " = ")[[2]][[2]]
-##secret_key = strsplit(readLines("~/.aws/credentials"), " = ")[[3]][[2]]
-
-
 workers = 1
 
 aws <- AWSParam(
@@ -28,12 +19,11 @@ aws <- AWSParam(
     awsSubnet = subnet,
     awsSecurityGroup = sg,
     awsAmiId= image,
-    awsSshKeyPair = "~/.ssh/bioc-default.pem",
+    awsSshKeyPair = "~/.ssh/bioc-default.pem"
 )
-
 aws
-
 ## Check if instance is up,
+awsInstanceStatus(aws)
 bpisup(aws)
 
 ## Start instance
