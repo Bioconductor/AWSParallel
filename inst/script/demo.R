@@ -1,5 +1,8 @@
-devtools::load_all()
+#devtools::load_all()
+devtools::install()
 
+##
+library(AWSParallel)
 ## RELEASE
 image <-  "ami-9fe2fee4"
 #sg <- "sg-748dcd07"
@@ -25,7 +28,7 @@ aws <- AWSParam(
     awsSubnet = subnet,
     awsSecurityGroup = sg,
     awsAmiId= image,
-    awsSshKeyPair = "~/.ssh/bioc-default.pem"
+    awsSshKeyPair = "~/.ssh/bioc-default.pem",
 )
 
 aws

@@ -1,3 +1,7 @@
+.snowHost <- BiocParallel:::.snowHost
+
+.snowPort <- BiocParallel:::.snowPort
+
 #' Reference class .AWSParam that allows usage of AWS EC2-instances
 #'
 #' The .AWSParam class extends the BiocParallelParam class
@@ -12,9 +16,9 @@
 #' @field awsInstance A list, created holding all the information of the AWS instance
 #' @field awsAmiId AMI(amazon machine image) ID for the Bioconductor-release version
 #' @field awsSshKeyPair SSH key pair, to associate with your AWS EC2-instance
-#' @importClassesFrom BiocParallel BiocParallelParam
+#' @importClassesFrom BiocParallel SnowParam BiocParallelParam
 .AWSParam <- setRefClass("AWSParam",
-   contains = "BiocParallelParam",
+   contains = "SnowParam",
     fields = list(
         awsCredentialsPath = "character",
         awsInstanceType = "character",
@@ -25,25 +29,6 @@
         awsSshKeyPair = "character"
     ),
     methods = list(
-        initialize = function(...,
-             awsCredentialsPath = NA_character_,
-             awsInstanceType = NA_character_,
-             awsSubnet = NA,
-             awsSecurityGroup = NA,
-             awsAmiId = NA_character_,
-             awsSshKeyPair = NA_character_
-             )
-        {
-            callSuper(...)
-            initFields(
-                awsCredentialsPath = awsCredentialsPath,
-                awsInstanceType = awsInstanceType,
-                awsSubnet = awsSubnet,
-                awsSecurityGroup = awsSecurityGroup,
-                awsAmiId = awsAmiId,
-                awsSshKeyPair = awsSshKeyPair
-            )
-        },
         show = function() {
             callSuper()
             ## Display only half of AWS access and secret keys
@@ -98,7 +83,7 @@ getAwsAmiId <- function()
 #' @param awsSecurityGroup character, Secutiry group which assigns inbound and outbound traffic at the instance level
 #' @param awsAmiId character, AMI(amazon machine image) ID for the Bioconductor-release version
 #' @param awsSshKeyPair character, SSH key pair, to associate with your AWS EC2-instance
-#' @return
+#' @return AWSParam object
 #' @examples
 #' \dontrun{
 #' aws <- AWSParam(workers = 1,
@@ -108,15 +93,21 @@ getAwsAmiId <- function()
 #'                awsAmiId= image,
 #'                awsSshKeyPair = "~/.ssh/bioc-default.pem")
 #' }
-#'
+#' @importFrom aws.ec2 my_ip
 #' @exportClass AWSParam
+#' @export
 AWSParam <- function(workers = 1,
              awsCredentialsPath = NA_character_,
              awsInstanceType = NA_character_,
              awsSubnet = NA,
              awsSecurityGroup = NA,
              awsAmiId = NA_character_,
-             awsSshKeyPair = NA_character_
+             awsSshKeyPair = NA_character_,
+             user="ubuntu",
+             rhome="/usr/local/lib/R",
+             snowlib = "/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4",
+             rscript = "/usr/local/bin/Rscript",
+             outfile = "/home/ubuntu/snow.log"
              )
 {
     ## Validate AWS Credentials Path
@@ -133,22 +124,37 @@ AWSParam <- function(workers = 1,
         !missing(awsInstanceType),
         !missing(awsSubnet) ,
         !missing(awsSecurityGroup),
-        !missing(awsSshKeyPair)
+        !missing(awsSshKeyPair),
+        length(user) == 1L, is.character(user),
+        length(rhome) == 1L, is.character(rhome),
+        length(snowlib) == 1L, is.character(snowlib),
+        length(rscript) == 1L, is.character(rscript),
+        length(outfile) == 1L, is.character(outfile)
     )
     ## If missing, default to release version of AMI
     if (missing(awsAmiId)) {
         awsAmiId <- getAwsAmiId()
     }
     ## Initiate .AWSParam class
-    .AWSParam(
-        workers = workers,
-        awsCredentialsPath = awsCredentialsPath,
-        awsInstanceType = awsInstanceType,
-        awsSubnet = awsSubnet,
-        awsSecurityGroup = awsSecurityGroup,
-        awsAmiId = awsAmiId,
-        awsSshKeyPair = awsSshKeyPair
-    )
+    x <- .AWSParam(workers = workers,
+                   awsCredentialsPath = awsCredentialsPath,
+                   awsInstanceType = awsInstanceType,
+                   awsSubnet = awsSubnet,
+                   awsSecurityGroup = awsSecurityGroup,
+                   awsAmiId = awsAmiId,
+                   awsSshKeyPair = awsSshKeyPair,
+                   rshcmd = paste("ssh -i", awsSshKeyPair, "-v", sep=" "),
+                   ## User params
+                   user=user,
+                   rhome=rhome,
+                   snowlib = snowlib,
+                   rscript = rscript,
+                   outfile = outfile,
+                   ## My IP
+                   master = my_ip()
+                   )
+    validObject(x)
+    x
 }
 
 
@@ -250,13 +256,12 @@ awsSecurityGroup <-
     x$awsSecurityGroup
 }
 
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ### Methods - control
 ###
 
-#' Create a local enviroment to store the cluster created. This allows for
-#' only a single AWSParam object to be present at a time.
-#'
+## Create a local enviroment to store the cluster created. This allows for
+## only a single AWSParam object to be present at a time.
 .awsCluster <- local({
     cl <- NULL
     list(
@@ -290,6 +295,13 @@ awsCluster <-
     .awsCluster$get()
 }
 
+
+#' @importFrom aws.ec2 describe_instances
+.awsClusterIps <- function(x)
+{
+    instances <- describe_instances(awsInstance(x))
+    vapply(instances[[1]][["instancesSet"]], `[[`, character(1), "ipAddress")
+}
 
 #' @importFrom aws.ec2 run_instances
 #' @importFrom aws.signature use_credentials
@@ -326,7 +338,9 @@ setMethod("bpstart", "AWSParam",
         Sys.sleep(1)
     }
     message(.awsInstanceStatus(x))
-    invisible(x)
+    ## start cluster
+    bpworkers(x) <- .awsClusterIps(x)
+    callNextMethod(x)
 })
 
 
@@ -372,6 +386,7 @@ setMethod("bpstop", "AWSParam",
     invisible(x)
 })
 
+#' @importFrom BiocParallel bpisup
 #' @exportMethod bpisup
 setMethod("bpisup", "AWSParam",
     function(x)
@@ -380,49 +395,6 @@ setMethod("bpisup", "AWSParam",
 })
 
 
-### - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-### Methods - evaluation
-###
 
-#' @exportMethod bplapply
-setMethod("bplapply", c("ANY","AWSParam"),
-    function(X, FUN, ..., BPREDO = list(), BPPARAM = bpparam())
-{
-    FUN <- match.fun(FUN)
-})
-
-
-#' @importFrom aws.ec2 describe_instances
-.awsClusterIps <- function(x)
-{
-    instances <- describe_instances(awsInstance(x))
-    vapply(instances[[1]][["instancesSet"]], `[[`, character(1), "ipAddress")
-}
-
-
-#' Make socket connection by calling SnowParam
-#'
-#' @param AWSParam Object of class AWSParams
-#'
-#' @return SnowParam object
-#'
-#' @importFrom BiocParallel SnowParam
-#' @importFrom aws.ec2 my_ip
-#' @export
-awsSnowParamCall <- function(x)
-{
-    ips <- .awsClusterIps(x)
-    param = SnowParam(
-        ips,
-        rshcmd = paste("ssh -i", awsSshKeyPair(x), "-v", sep=" "),
-        user="ubuntu",
-        rhome="/usr/local/lib/R",
-        snowlib = "/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4",
-        rscript = "/usr/local/bin/Rscript",
-        outfile = "/home/ubuntu/snow.log",
-        master = my_ip()
-    )
-    param
-}
 
 

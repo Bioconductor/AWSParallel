@@ -6,7 +6,10 @@
 \usage{
 AWSParam(workers = 1, awsCredentialsPath = NA_character_,
   awsInstanceType = NA_character_, awsSubnet = NA, awsSecurityGroup = NA,
-  awsAmiId = NA_character_, awsSshKeyPair = NA_character_)
+  awsAmiId = NA_character_, awsSshKeyPair = NA_character_,
+  user = "ubuntu", rhome = "/usr/local/lib/R",
+  snowlib = "/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4",
+  rscript = "/usr/local/bin/Rscript", outfile = "/home/ubuntu/snow.log")
 }
 \arguments{
 \item{workers}{Numeric, number of workers to launch in the cluster}
@@ -23,6 +26,9 @@ AWSParam(workers = 1, awsCredentialsPath = NA_character_,
 
 \item{awsSshKeyPair}{character, SSH key pair, to associate with your AWS EC2-instance}
 }
+\value{
+AWSParam object
+}
 \description{
 This function starts a cluster of AWS EC2-instances to allow
 parallel computation of R objects, and works with BiocParallel,
@@ -37,5 +43,4 @@ aws <- AWSParam(workers = 1,
                awsAmiId= image,
                awsSshKeyPair = "~/.ssh/bioc-default.pem")
 }
-
 }
