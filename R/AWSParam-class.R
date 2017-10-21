@@ -103,7 +103,7 @@ AWSParam <- function(workers = 1,
              awsSshKeyPair = NA_character_,
              user="ubuntu",
              rhome="/usr/local/lib/R",
-             snowlib = "/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4",
+             bplib = find.package("BiocParallel"),
              rscript = "/usr/local/bin/Rscript",
              outfile = "/home/ubuntu/snow.log"
              )
@@ -125,7 +125,7 @@ AWSParam <- function(workers = 1,
         !missing(awsSshKeyPair),
         length(user) == 1L, is.character(user),
         length(rhome) == 1L, is.character(rhome),
-        length(snowlib) == 1L, is.character(snowlib),
+        length(bplib) == 1L, is.character(bplib),
         length(rscript) == 1L, is.character(rscript),
         length(outfile) == 1L, is.character(outfile)
     )
@@ -139,7 +139,7 @@ AWSParam <- function(workers = 1,
         rshcmd = paste("ssh -i", awsSshKeyPair, "-v", sep=" "),
         user=user,
         rhome=rhome,
-        snowlib = snowlib,
+        snowlib = bplib,
         rscript = rscript,
         outfile = outfile
     )
