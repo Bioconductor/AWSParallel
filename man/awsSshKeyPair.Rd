@@ -7,7 +7,7 @@
 awsSshKeyPair(x)
 }
 \arguments{
-\item{AWSParam}{}
+\item{AWSSnowParam}{}
 }
 \description{
 Get the SSH public key path associted to the AWS EC2 instance.

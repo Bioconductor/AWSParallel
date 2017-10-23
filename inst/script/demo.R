@@ -13,13 +13,15 @@ sg <- "sg-52b65822"
 subnet <- "subnet-d66a05ec"
 workers = 1
 
+awsSshKeyPair = getOption("aws_ssh_key_pair")
+
 aws <- AWSParam(
     workers,
     awsInstanceType="t2.micro",
     awsSubnet = subnet,
     awsSecurityGroup = sg,
     awsAmiId= image,
-    awsSshKeyPair = "~/.ssh/bioc-default.pem"
+    awsSshKeyPair = awsSshKeyPair
 )
 aws
 ## Check if instance is up,
@@ -39,11 +41,11 @@ bpisup(aws)
 
 ## Stop instance
 #bpstop(aws)
-
+keypair = getOption("aws_ssh_key_pair")
 
 cl <- snow::makeSOCKcluster(
     ips,
-    rshcmd = "ssh -i ~/.ssh/bioc-default.pem -v",
+    rshcmd = paste("ssh -i", keypair,"-v", sep=" "),
     user="ubuntu",
     rhome="/usr/local/lib/R",
     snowlib = "/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4",
@@ -55,7 +57,7 @@ cl <- snow::makeSOCKcluster(
 
 param = SnowParam(
     ips,
-    rshcmd = "ssh -i ~/.ssh/bioc-default.pem -v",
+    rshcmd = paste("ssh -i", keypair,"-v", sep=" "),
     user="ubuntu",
     rhome="/usr/local/lib/R",
     snowlib = "/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4",

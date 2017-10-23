@@ -7,7 +7,7 @@
 awsInstanceType(x)
 }
 \arguments{
-\item{AWSParam}{object}
+\item{AWSSnowParam}{object}
 }
 \value{
 character

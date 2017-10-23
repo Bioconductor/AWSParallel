@@ -1,6 +1,6 @@
-#' Reference class .AWSParam that allows usage of AWS EC2-instances
+#' Reference class .AWSSnowParam that allows usage of AWS EC2-instances
 #'
-#' The .AWSParam class extends the BiocParallelParam class
+#' The .AWSSnowParam class extends the SnowParam class
 #' to allow usage of AWS EC2-instances for parallel computation.
 #' The methods follow a style similar to that of BiocParallelParams,
 #' with bpstart, bpstop, bpisup, bplapply being the important one.
@@ -13,8 +13,8 @@
 #' @field awsAmiId AMI(amazon machine image) ID for the Bioconductor-release version
 #' @field awsSshKeyPair SSH key pair, to associate with your AWS EC2-instance
 #' @importClassesFrom BiocParallel SnowParam BiocParallelParam
-.AWSParam <- setRefClass(
-    "AWSParam",
+.AWSSnowParam <- setRefClass(
+    "AWSSnowParam",
     contains = "SnowParam",
     fields = list(
         awsCredentialsPath = "character",
@@ -68,7 +68,7 @@ getAwsAmiId <- function()
 }
 
 
-#' AWSParam function to start an AWS EC2-instance cluster
+#' AWSSnowParam function to start an AWS EC2-instance cluster
 #'
 #' This function starts a cluster of AWS EC2-instances to allow
 #' parallel computation of R objects, and works with BiocParallel,
@@ -81,20 +81,20 @@ getAwsAmiId <- function()
 #' @param awsSecurityGroup character, Secutiry group which assigns inbound and outbound traffic at the instance level
 #' @param awsAmiId character, AMI(amazon machine image) ID for the Bioconductor-release version
 #' @param awsSshKeyPair character, SSH key pair, to associate with your AWS EC2-instance
-#' @return AWSParam object
+#' @return AWSSnowParam object
 #' @examples
 #' \dontrun{
-#' aws <- AWSParam(workers = 1,
+#' aws <- AWSSnowParam(workers = 1,
 #'                awsInstanceType="t2.micro",
 #'                awsSubnet = subnet,
 #'                awsSecurityGroup = sg,
 #'                awsAmiId= image,
-#'                awsSshKeyPair = "~/.ssh/bioc-default.pem")
+#'                awsSshKeyPair = "~/.ssh/id_rsa.pub")
 #' }
 #' @importFrom aws.ec2 my_ip
-#' @exportClass AWSParam
+#' @exportClass AWSSnowParam
 #' @export
-AWSParam <- function(workers = 1,
+AWSSnowParam <- function(workers = 1,
              awsCredentialsPath = NA_character_,
              awsInstanceType = NA_character_,
              awsSubnet = NA,
@@ -144,13 +144,13 @@ AWSParam <- function(workers = 1,
         outfile = outfile
     )
 
-    ## Initiate .AWSParam class
-    x <- .AWSParam(
+    ## Initiate .AWSSnowParam class
+    x <- .AWSSnowParam(
         ## base class (SnowParam) fields
         workers = workers,
         hostname = my_ip(),
         .clusterargs = .clusterargs,
-        ## AWSParam fields
+        ## AWSSnowParam fields
         awsCredentialsPath = awsCredentialsPath,
         awsInstanceType = awsInstanceType,
         awsSubnet = awsSubnet,
@@ -169,7 +169,7 @@ AWSParam <- function(workers = 1,
 
 #' Get path to AWS credentials
 #'
-#' @param AWSParam object
+#' @param AWSSnowParam object
 #'
 #' @export
 awsCredentialsPath <-
@@ -180,7 +180,7 @@ awsCredentialsPath <-
 
 #' Get number of workers in the cluster
 #'
-#' @param AWSParam object
+#' @param AWSSnowParam object
 #'
 #' @export
 awsWorkers <-
@@ -191,7 +191,7 @@ awsWorkers <-
 
 #' Get AWS instance attributes in a list
 #'
-#' @param AWSParam object
+#' @param AWSSnowParam object
 #'
 #' @export
 awsInstance <-
@@ -205,7 +205,7 @@ awsInstance <-
 #'
 #' The possible instance types are listed in the document:https://aws.amazon.com/ec2/instance-types/. The Bioconductor AMI's have been built using an m4.xlarge instance type. Large computations are best supported on this type of instance.
 #'
-#' @param AWSParam object
+#' @param AWSSnowParam object
 #'
 #' @return character
 #' @export
@@ -217,7 +217,7 @@ awsInstanceType <-
 
 #' Get AWS AMI-ID of the launched instance
 #'
-#' @param AWSParam
+#' @param AWSSnowParam
 #'
 #' @export
 awsAmiId <-
@@ -228,7 +228,7 @@ awsAmiId <-
 
 #' Get AWS Subnet within which the AWS EC2 instance was launched
 #'
-#' @param AWSParam
+#' @param AWSSnowParam
 #'
 #' @export
 awsSubnet <-
@@ -240,7 +240,7 @@ awsSubnet <-
 
 #' Get the SSH public key path associted to the AWS EC2 instance.
 #'
-#' @param AWSParam
+#' @param AWSSnowParam
 #'
 #' @export
 awsSshKeyPair <-
@@ -252,7 +252,7 @@ awsSshKeyPair <-
 #' Get AWS Security group for the EC2 instance, which defines inbound and
 #' outbound traffic.
 #'
-#' @param AWSParam
+#' @param AWSSnowParam
 #'
 #' @export
 awsSecurityGroup <-
@@ -266,7 +266,7 @@ awsSecurityGroup <-
 ###
 
 ## Create a local enviroment to store the cluster created. This allows for
-## only a single AWSParam object to be present at a time.
+## only a single AWSSnowParam object to be present at a time.
 .awsCluster <- local({
     cl <- NULL
     list(
@@ -277,7 +277,7 @@ awsSecurityGroup <-
             cl
         },
         set = function(cluster) {
-            stopifnot(is(cluster, "AWSParam"))
+            stopifnot(is(cluster, "AWSSnowParam"))
             cl <<- cluster
         },
         reset = function() {
@@ -286,10 +286,10 @@ awsSecurityGroup <-
     )
 })
 
-#' Get the AWSParam object currently launched. Only one AWSParam object can be
+#' Get the AWSSnowParam object currently launched. Only one AWSSnowParam object can be
 #' started within one session.
 #'
-#' @return AWSParam object
+#' @return AWSSnowParam object
 #' @export
 awsCluster <-
     function()
@@ -312,7 +312,7 @@ awsCluster <-
 #' @importFrom aws.signature use_credentials
 #' @importFrom BiocParallel bpstart
 #' @exportMethod bpstart
-setMethod("bpstart", "AWSParam",
+setMethod("bpstart", "AWSSnowParam",
     function(x)
 {
     if (.awsCluster$isup())
@@ -377,7 +377,7 @@ awsInstanceStatus <-
 #' @importFrom aws.ec2 terminate_instances
 #' @importFrom BiocParallel bpstop
 #' @exportMethod bpstop
-setMethod("bpstop", "AWSParam",
+setMethod("bpstop", "AWSSnowParam",
     function(x)
 {
     if (.awsisup(x)) {

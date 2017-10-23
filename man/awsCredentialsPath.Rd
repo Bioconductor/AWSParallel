@@ -7,7 +7,7 @@
 awsCredentialsPath(x)
 }
 \arguments{
-\item{AWSParam}{object}
+\item{AWSSnowParam}{object}
 }
 \description{
 Get path to AWS credentials

@@ -7,7 +7,7 @@
 awsAmiId(x)
 }
 \arguments{
-\item{AWSParam}{}
+\item{AWSSnowParam}{}
 }
 \description{
 Get AWS AMI-ID of the launched instance

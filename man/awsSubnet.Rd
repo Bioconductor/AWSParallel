@@ -7,7 +7,7 @@
 awsSubnet(x)
 }
 \arguments{
-\item{AWSParam}{}
+\item{AWSSnowParam}{}
 }
 \description{
 Get AWS Subnet within which the AWS EC2 instance was launched

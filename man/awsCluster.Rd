@@ -2,15 +2,15 @@
 % Please edit documentation in R/AWSParam-class.R
 \name{awsCluster}
 \alias{awsCluster}
-\title{Get the AWSParam object currently launched. Only one AWSParam object can be
+\title{Get the AWSSnowParam object currently launched. Only one AWSSnowParam object can be
 started within one session.}
 \usage{
 awsCluster()
 }
 \value{
-AWSParam object
+AWSSnowParam object
 }
 \description{
-Get the AWSParam object currently launched. Only one AWSParam object can be
+Get the AWSSnowParam object currently launched. Only one AWSSnowParam object can be
 started within one session.
 }

@@ -8,7 +8,7 @@ outbound traffic.}
 awsSecurityGroup(x)
 }
 \arguments{
-\item{AWSParam}{}
+\item{AWSSnowParam}{}
 }
 \description{
 Get AWS Security group for the EC2 instance, which defines inbound and

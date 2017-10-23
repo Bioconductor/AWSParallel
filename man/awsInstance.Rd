@@ -7,7 +7,7 @@
 awsInstance(x)
 }
 \arguments{
-\item{AWSParam}{object}
+\item{AWSSnowParam}{object}
 }
 \description{
 Get AWS instance attributes in a list

@@ -7,7 +7,7 @@
 awsWorkers(x)
 }
 \arguments{
-\item{AWSParam}{object}
+\item{AWSSnowParam}{object}
 }
 \description{
 Get number of workers in the cluster
