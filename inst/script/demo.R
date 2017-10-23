@@ -15,14 +15,17 @@ workers = 1
 
 awsSshKeyPair = getOption("aws_ssh_key_pair")
 
-aws <- AWSParam(
+
+aws <- AWSSnowParam(
     workers,
     awsInstanceType="t2.micro",
     awsSubnet = subnet,
     awsSecurityGroup = sg,
     awsAmiId= image,
-    awsSshKeyPair = awsSshKeyPair
+    awsSshKeyPair = awsSshKeyPair,
+    bplib="/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4/BiocParallel"
 )
+
 aws
 ## Check if instance is up,
 awsInstanceStatus(aws)

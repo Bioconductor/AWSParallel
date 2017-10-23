@@ -103,7 +103,8 @@ AWSSnowParam <- function(workers = 1,
              awsSshKeyPair = NA_character_,
              user="ubuntu",
              rhome="/usr/local/lib/R",
-             bplib = find.package("BiocParallel"),
+             ## bplib = find.package("BiocParallel"),
+             bplib="/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4/BiocParallel",
              rscript = "/usr/local/bin/Rscript",
              outfile = "/home/ubuntu/snow.log"
              )
@@ -139,9 +140,9 @@ AWSSnowParam <- function(workers = 1,
         rshcmd = paste("ssh -i", awsSshKeyPair, "-v", sep=" "),
         user=user,
         rhome=rhome,
-        snowlib = bplib,
-        rscript = rscript,
-        outfile = outfile
+        snowlib=bplib,
+        rscript=rscript,
+        outfile=outfile
     )
 
     ## Initiate .AWSSnowParam class
