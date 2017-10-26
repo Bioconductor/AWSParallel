@@ -250,7 +250,7 @@ awsSshKeyPair <-
     function(x)
 {
     x$awsSshKeyPair
-    }
+}
 
 #' Get AWS Security group for the EC2 instance, which defines inbound and
 #' outbound traffic.
