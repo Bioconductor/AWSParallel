@@ -36,7 +36,7 @@
                 "\n",
                 "  awsSubnet: ", awsSubnet(.self),
                 "\n",
-                "  awsSecurityGroup: ", awsSecurityGroup(.self),
+                "  awsSecurityGroup(s): ", paste(awsSecurityGroup(.self), sep=" ", collapse=" "),
                 "\n",
                 "  awsAmiId: ", awsAmiId(.self),
                 "\n",
