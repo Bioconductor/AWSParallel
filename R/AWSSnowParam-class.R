@@ -49,6 +49,7 @@
 )
 
 
+
 #' Get name of bioconductor release version AMI
 #'
 #' @return Bioconductor release version
@@ -84,7 +85,7 @@ getAwsAmiId <- function()
 #' @return AWSSnowParam object
 #' @examples
 #' \dontrun{
-#' aws <- AWSSnowParam(workers = 1,
+#'         aws <- AWSSnowParam(workers = 1,
 #'                awsInstanceType="t2.micro",
 #'                awsSubnet = subnet,
 #'                awsSecurityGroup = sg,
@@ -103,7 +104,6 @@ AWSSnowParam <- function(workers = 1,
              awsSshKeyPair = NA_character_,
              user="ubuntu",
              rhome="/usr/local/lib/R",
-             ## bplib = find.package("BiocParallel"),
              bplib="/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4/BiocParallel",
              rscript = "/usr/local/bin/Rscript",
              outfile = "/home/ubuntu/snow.log"
@@ -204,7 +204,9 @@ awsInstance <-
 
 #' Get AWS Instance type.
 #'
-#' The possible instance types are listed in the document:https://aws.amazon.com/ec2/instance-types/. The Bioconductor AMI's have been built using an m4.xlarge instance type. Large computations are best supported on this type of instance.
+#' The possible instance types are listed in the document:https://aws.amazon.com/ec2/instance-types/.
+#' The Bioconductor AMI's have been built using an m4.xlarge instance type.
+#' Large computations are best supported on this type of instance.
 #'
 #' @param AWSSnowParam object
 #'
@@ -321,7 +323,7 @@ setMethod("bpstart", "AWSSnowParam",
             "use 'bpstop(awsCluster())' to shut down existing AWS cluster",
             call. = FALSE
         )
-    use_credentials()
+    use_credentials(file=awsCredentialsPath(x))
     ## Set awsBiocVersion, devel vs release
 
     result <- run_instances(
