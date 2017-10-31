@@ -149,7 +149,7 @@ AWSSnowParam <- function(workers = 1,
     x <- .AWSSnowParam(
         ## base class (SnowParam) fields
         workers = workers,
-        hostname = my_ip(),
+        hostname = system2("hostname", "-i", stdout=TRUE),
         .clusterargs = .clusterargs,
         ## AWSSnowParam fields
         awsCredentialsPath = awsCredentialsPath,
@@ -308,8 +308,20 @@ awsCluster <-
 .awsClusterIps <- function(x)
 {
     instances <- describe_instances(awsInstance(x))
-    vapply(instances[[1]][["instancesSet"]], `[[`, character(1), "ipAddress")
+    vapply(instances[[1]][["instancesSet"]], `[[`, character(1), "privateIpAddress")
 }
+
+#' @importFrom aws.ec2 describe_vpcs
+awsVpcs <- function()
+{
+    vpcs <- describe_vpcs()
+    cidr <- sapply(vpcs, `[[`, "cidrBlock")
+    
+}
+
+
+
+#' @importFrom
 
 #' @importFrom aws.ec2 run_instances
 #' @importFrom aws.signature use_credentials
@@ -348,6 +360,9 @@ setMethod("bpstart", "AWSSnowParam",
     message(awsInstanceStatus(x))
     ## start cluster
     bpworkers(x) <- .awsClusterIps(x)
+    ## Sleep for 10 seconds to make sure there is no race condition
+    Sys.sleep(10)
+    ## Call bpstart in SnowParam
     callNextMethod(x)
 })
 
@@ -399,8 +414,3 @@ setMethod("bpstop", "AWSSnowParam",
     x$awsInstance <- list()
     invisible(x)
 })
-
-
-
-
-
