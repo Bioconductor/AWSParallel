@@ -11,6 +11,8 @@ workers = 2
 ## Set the AWS SSH key pair for your machine
 awsSshKeyPair = getOption("aws_ssh_key_pair")
 
+sg <- "sg-748dcd07"
+subnet <- "subnet-d66a05ec"
 ## Create AWS instance
 aws <- AWSSnowParam(
     workers=workers,
@@ -19,8 +21,9 @@ aws <- AWSSnowParam(
     awsSecurityGroup = sg,
     awsAmiId= image,
     awsSshKeyPair = awsSshKeyPair,
-    bplib="/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4/BiocParallel"
-)
+    bplib="/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4/BiocParallel",
+    awsCredentialsPath="/home/ubuntu/credentials"
+    )
 
 aws
 ## Check if instance is up,
@@ -46,6 +49,11 @@ bpstop(aws)
 ##          this allows AWSParallel to create
 ##          as needed.
 #############################################
+
+library(AWSParallel)
+workers = 2
+image <-  "ami-9fe2fee4"
+awsSshKeyPair = getOption("aws_ssh_key_pair")
 
 aws <- AWSSnowParam(
     workers=workers,

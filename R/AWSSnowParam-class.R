@@ -103,7 +103,7 @@ getAwsRequirements <- function()
 {
     ## If user passes in CIDR block, does it get passed in?
     vpc <- .awsCreateVpc()
-    message("After running your AWSParallel Job, you may delete your newly created VPC: ", vpc) 
+    message("After running your AWSParallel Job, you may delete your newly created VPC: ", vpc, "\n\n")
     subnet <- .awsCreateSubnet(vpc)
     sg <- .awsCreateSecurityGroup(vpc)
     ## Return a named list of vpc, subnet and security group
@@ -137,7 +137,7 @@ getAwsRequirements <- function()
 #' @importFrom aws.signature use_credentials
 #' @exportClass AWSSnowParam
 #' @export
-AWSSnowParam <- function(workers = 1,
+AWSSnowParam <- function(workers = 2,
              awsCredentialsPath = NA_character_,
              awsInstanceType = NA_character_,
              awsSubnet = NA,
@@ -173,25 +173,17 @@ AWSSnowParam <- function(workers = 1,
         length(outfile) == 1L, is.character(outfile)
     )
 
-    if (missing(awsSubnet)) {
-        stop("Both subnet and security group is required, or neither")
-    }
-
-    if (missing(awsSecurityGroup)) {
-        stop("Both subnet and security group is required, or neither")
-    }
-    
     ## If missing, default to release version of AMI
     if (missing(awsAmiId)) {
         awsAmiId <- getAwsAmiId()
     }
 
     ## If both security group and subnet are missing, assign
-    if (missing(awsSubnet) && missing(awsSecurityGroup)) {
+    if (missing(awsSubnet) || missing(awsSecurityGroup)) {
         reqs <- getAwsRequirements()
         ## Allocate subnet and securityGroup as need
-        awsSubnet <- reqs$subnet
-        awsSecurityGroup <- reqs$sgroup
+        awsSubnet <- reqs$subnet$subnet$subnetId[[1]]
+        awsSecurityGroup <- reqs$sgroup$groupId
     }
     
     .clusterargs <- list(
