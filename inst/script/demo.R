@@ -1,23 +1,19 @@
-#devtools::load_all()
-devtools::install()
-
-##
+###########################################
+## Trial 1: with Security Group and Subnet
+###########################################
 library(AWSParallel)
-## RELEASE
-image <-  "ami-9fe2fee4"
-#sg <- "sg-748dcd07"
-## (val)Security group SSH open to the world
-sg <- "sg-52b65822"
-## Security group open to the world TCP
-## sg <- "sg-b6884c20"
-subnet <- "subnet-d66a05ec"
-workers = 1
 
+## Bioc-devel 
+image <-  "ami-9fe2fee4"
+
+## Include Number of workers as 2
+workers = 2
+## Set the AWS SSH key pair for your machine
 awsSshKeyPair = getOption("aws_ssh_key_pair")
 
-
+## Create AWS instance
 aws <- AWSSnowParam(
-    workers,
+    workers=workers,
     awsInstanceType="t2.micro",
     awsSubnet = subnet,
     awsSecurityGroup = sg,
@@ -29,59 +25,52 @@ aws <- AWSSnowParam(
 aws
 ## Check if instance is up,
 awsInstanceStatus(aws)
-bpisup(aws)
 
 ## Start instance
 bpstart(aws)
 
-
+## Return cluster which was started
 awsCluster()
 
-ips <- BiocParallel:::.awsClusterIps(aws)
-ips
 ## Check is instance is up
-bpisup(aws)
+awsInstanceStatus(aws)
 
-## Stop instance
-#bpstop(aws)
-keypair = getOption("aws_ssh_key_pair")
+## start an AWSParam job
+bplapply(1:4, function(i) system("hostname", intern=TRUE), BPPARAM=aws)
 
-cl <- snow::makeSOCKcluster(
-    ips,
-    rshcmd = paste("ssh -i", keypair,"-v", sep=" "),
-    user="ubuntu",
-    rhome="/usr/local/lib/R",
-    snowlib = "/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4",
-    rscript = "/usr/local/bin/Rscript",
-    outfile = "/home/ubuntu/snow.log",
-    master = aws.ec2::my_ip()
+## Stop aws instance
+bpstop(aws)
+
+##############################################
+## Trial 2: Without security group and subnet,
+##          this allows AWSParallel to create
+##          as needed.
+#############################################
+
+aws <- AWSSnowParam(
+    workers=workers,
+    awsInstanceType="t2.micro",
+    awsAmiId= image,
+    awsSshKeyPair = awsSshKeyPair,
+    bplib="/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4/BiocParallel"
 )
 
 
-param = SnowParam(
-    ips,
-    rshcmd = paste("ssh -i", keypair,"-v", sep=" "),
-    user="ubuntu",
-    rhome="/usr/local/lib/R",
-    snowlib = "/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4",
-    rscript = "/usr/local/bin/Rscript",
-    outfile = "/home/ubuntu/snow.log",
-    master = aws.ec2::my_ip()
-)
+aws
+## Check if instance is up,
+awsInstanceStatus(aws)
 
+## Start instance
+bpstart(aws)
 
+## Return cluster which was started
+awsCluster()
 
-## stop the instance
-# e = environment(BiocParallel:::.awsCluster$set)
-# e[["cl"]]= NULL
+## Check is instance is up
+awsInstanceStatus(aws)
 
-## Make new security group called "testing aws param"
+## start an AWSParam job
+bplapply(1:4, function(i) system("hostname", intern=TRUE), BPPARAM=aws)
 
-## start a snow param
-bplapply(1:4, function(i) system("hostname", intern=TRUE), BPPARAM=param)
-bpstop(param)
-
-
-## snow
-
-snow::parLapply(cl, 1:5, function(i) system("hostname"))
+## Stop aws instance
+bpstop(aws)

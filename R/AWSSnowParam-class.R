@@ -69,6 +69,48 @@ getAwsAmiId <- function()
 }
 
 
+#' @importFrom aws.ec2 create_vpc
+.awsCreateVpc <- function(cidr = "10.0.0.0/16")
+{
+    ## Using default VPC settings
+    new_vpc <- create_vpc(cidr)
+    new_vpc
+}
+
+#' @importFrom aws.ec2 create_subnet
+.awsCreateSubnet <- function(vpc)
+{
+    awsSubnet <- create_subnet(vpc, cidr=vpc$cidrBlock)
+    awsSubnet
+}
+
+
+#' @importFrom aws.ec2 create_sgroup
+#' @importFrom aws.ec2 authorize_ingress
+.awsCreateSecurityGroup <- function(vpc)
+{
+    ## TODO: add error checking to see if sg exists
+    ## create sgroup
+    sg <- create_sgroup("AWSParallel_sgroup", "Security group for AWSParallel", vpc = vpc)
+    ## Add TCP port range between 11000 to 11999
+    authorize_ingress(sg, port=c(11000,11999), protocol="tcp", cidr=vpc$cidrBlock)
+    ## Add SSH 22 port 
+    authorize_ingress(sg, port=22, protocol="tcp", cidr="0.0.0.0/0")
+    sg
+}
+
+getAwsRequirements <- function()
+{
+    ## If user passes in CIDR block, does it get passed in?
+    vpc <- .awsCreateVpc()
+    message("After running your AWSParallel Job, you may delete your newly created VPC: ", vpc) 
+    subnet <- .awsCreateSubnet(vpc)
+    sg <- .awsCreateSecurityGroup(vpc)
+    ## Return a named list of vpc, subnet and security group
+    list(vpc=vpc, subnet=subnet, sgroup=sg)
+}
+
+
 #' AWSSnowParam function to start an AWS EC2-instance cluster
 #'
 #' This function starts a cluster of AWS EC2-instances to allow
@@ -85,14 +127,14 @@ getAwsAmiId <- function()
 #' @return AWSSnowParam object
 #' @examples
 #' \dontrun{
+#'         ## Minimal example
 #'         aws <- AWSSnowParam(workers = 1,
 #'                awsInstanceType="t2.micro",
-#'                awsSubnet = subnet,
-#'                awsSecurityGroup = sg,
 #'                awsAmiId= image,
-#'                awsSshKeyPair = "~/.ssh/id_rsa.pub")
+#'                awsSshKeyPair = "~/.ssh/<my_aws_key_pair>.pub")
 #' }
 #' @importFrom aws.ec2 my_ip
+#' @importFrom aws.signature use_credentials
 #' @exportClass AWSSnowParam
 #' @export
 AWSSnowParam <- function(workers = 1,
@@ -113,6 +155,8 @@ AWSSnowParam <- function(workers = 1,
     if (is.na(awsCredentialsPath)) {
         if (.Platform$OS.type == "unix") {
             awsCredentialsPath = "~/.aws/credentials"
+            ## Use credentials
+            use_credentials(awsCredentialsPath)
         } else {
             ## FIXME: Windows %USERPROFILE%.awscredentials
             message("TODO: Windows machine needs path for credentials")
@@ -121,8 +165,6 @@ AWSSnowParam <- function(workers = 1,
     stopifnot(
         file.exists(awsCredentialsPath),
         !missing(awsInstanceType),
-        !missing(awsSubnet) ,
-        !missing(awsSecurityGroup),
         !missing(awsSshKeyPair),
         length(user) == 1L, is.character(user),
         length(rhome) == 1L, is.character(rhome),
@@ -130,13 +172,31 @@ AWSSnowParam <- function(workers = 1,
         length(rscript) == 1L, is.character(rscript),
         length(outfile) == 1L, is.character(outfile)
     )
+
+    if (missing(awsSubnet)) {
+        stop("Both subnet and security group is required, or neither")
+    }
+
+    if (missing(awsSecurityGroup)) {
+        stop("Both subnet and security group is required, or neither")
+    }
+    
     ## If missing, default to release version of AMI
     if (missing(awsAmiId)) {
         awsAmiId <- getAwsAmiId()
     }
 
+    ## If both security group and subnet are missing, assign
+    if (missing(awsSubnet) && missing(awsSecurityGroup)) {
+        reqs <- getAwsRequirements()
+        ## Allocate subnet and securityGroup as need
+        awsSubnet <- reqs$subnet
+        awsSecurityGroup <- reqs$sgroup
+    }
+    
     .clusterargs <- list(
         spec = workers, type = "SOCK",
+        ## TODO: Remove verbose argument -v
         rshcmd = paste("ssh -i", awsSshKeyPair, "-v", sep=" "),
         user=user,
         rhome=rhome,
@@ -149,6 +209,7 @@ AWSSnowParam <- function(workers = 1,
     x <- .AWSSnowParam(
         ## base class (SnowParam) fields
         workers = workers,
+        ## TODO: There is no `-i` in OS-X
         hostname = system2("hostname", "-i", stdout=TRUE),
         .clusterargs = .clusterargs,
         ## AWSSnowParam fields
@@ -311,17 +372,6 @@ awsCluster <-
     vapply(instances[[1]][["instancesSet"]], `[[`, character(1), "privateIpAddress")
 }
 
-#' @importFrom aws.ec2 describe_vpcs
-awsVpcs <- function()
-{
-    vpcs <- describe_vpcs()
-    cidr <- sapply(vpcs, `[[`, "cidrBlock")
-    
-}
-
-
-
-#' @importFrom
 
 #' @importFrom aws.ec2 run_instances
 #' @importFrom aws.signature use_credentials
@@ -361,6 +411,7 @@ setMethod("bpstart", "AWSSnowParam",
     ## start cluster
     bpworkers(x) <- .awsClusterIps(x)
     ## Sleep for 10 seconds to make sure there is no race condition
+    ## TODO: make this better
     Sys.sleep(10)
     ## Call bpstart in SnowParam
     callNextMethod(x)
