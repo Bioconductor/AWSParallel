@@ -11,37 +11,43 @@ vignette: >
 
 # Introduction
 
-The AWSParallel package provides functionality to perform parallel evaluation using AWS infrastructure, specifically EC2. It extends the `SnowParam` class in BiocParallel, and works with Bioconductor objects.
+The AWSParallel package provides functionality to perform parallel evaluation using AWS infrastructure, most importantly EC2. It extends the `SnowParam` class in BiocParallel, and works with the same range of R and Bioconductor objects as `SnowParam`.
 
-The main idea behind the AWSParallel package is allow the user to create a cluster of EC2 machines on AWS, and run `bplapply` from one "master" node(EC2 machine) to send a task to "worker" machines.
+The goal of the AWSParallel package is allow the user to create a cluster of EC2 machines on AWS, and run `bplapply` from one "master" node(EC2 machine) to send a task to "worker" machines. It is important to note, that both master and worker nodes are on EC2. The user would have to start an instance, manually, and use this machine as master.
 
 This package requires that the user have an Amazon AWS account that *costs money*, and requires a credit card to access. The AWS credentials provided by the user also need access, to other AWS services as well, namely, 
 
     1. IAM
-    2. VPC
+    2. VPC  
     3. EC2
 
 # Quick Start
 
-The quick start guide assumes you have your AWS access key, and secret key in `~/.aws/credentials`. Please refer to the detailed guide if not.
+The quick start guide assumes you have your AWS access key, and secret key in `~/.aws/credentials`. Please refer to the detailed section of the vignette if these settings are not present.
 
 ```{r, eval=FALSE}
 library(AWSParallel)
+
+# Number of workers
 workers = 2
 
-## bioc-release 3.6
-image <-  "ami-7d342906"
+## bioc-release 3.6 on US-EAST-2 (Ohio region), this is not default.
+## Look up AMI's you want to use, at 
+## http://bioconductor.org/help/bioconductor-cloud-ami/#ami_ids
+image <- "ami-2951fa53"
+
+## "ami-a90c23cc"
 
 ## A AWS Key pair created and downloaded via AWS.
-awsSshKeyPair = "~/.ssh/path_to_key.pem"
+awsSshKeyPair = "~/AWSparallel-test-keypair.pem"
 
+## Launch a small instance for demonstration `t2.micro`,
+## larger instances cost more money.
 aws <- AWSSnowParam(
     workers=workers,
-    awsInstanceType="t2.micro",  ## Launch a small instance for demonstration 
+    awsInstanceType="t2.micro",
     awsAmiId= image,
     awsSshKeyPair = awsSshKeyPair
-    ## TODO: This should be removed. As installing on AMI, this should be default.
-    ##     bplib="/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4/BiocParallel"
 )
 
 ## Start instance
@@ -53,7 +59,7 @@ bpstart(aws)
 ## the variable xx.
 xx <- bplapply(1:4, function(i) system("hostname", intern=TRUE), BPPARAM=aws)
 
-## Stop aws instance
+## Stop aws instance(s)
 bpstop(aws) 
 ```
 
@@ -130,7 +136,7 @@ We need to launch the Bioconductor AMI for the *release* version.
 library(AWSParallel)
 
 ## bioc-release 3.6 as found in https://www.bioconductor.org/config.yaml
-image <-  "ami-7d342906"
+image <- "ami-a90c23cc"
 
 ## Number of workers to be started in the AWS cluster
 workers = 4
@@ -154,7 +160,6 @@ aws <- AWSSnowParam(
     awsSecurityGroup = sg,
     awsAmiId= image,
     awsSshKeyPair = path_to_key,
-    bplib="/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4/BiocParallel",
     awsCredentialsPath="/home/ubuntu/credentials"
     )
 
@@ -180,14 +185,47 @@ bpstop(aws)
 
 # Choosing AWS EC2 Instance Size
 
+The size of an AWS-EC2 Instance gives you access to the required amount of compute power. Larger instances usually have a higher capacity for computing, but also cost more money. The [AWS Pricing][] is given in the documentation, and we recommend you take a look at it.
+
+The Bioconductor AMI's have been built using the *m4.xlarge* machine. So ideally to run a large computation, and use every package available in Bioconductor you would use your worker of size *m4.xlarge*. If you are using a limited set of packages, or you just need to run a job in parallel, it would be easier to take a look at the [Instance types][] and decide the appropriate size for your needs.
 
 
-# Steps
+# Steps to prepare master instance.
+
+This process can be done ONE time, and the instance can be stopped without being terminated. This *master* instance can be reused.
 
 1. Create a new amazon EC2 instance which is going to be the *master* node, by choosing the AMI-ID from this page, http://bioconductor.org/help/bioconductor-cloud-ami/#ami_ids. Follow the steps in the ec2 management console to launch the image.
-An instance with the size of `t2.micro` is also accepatble for the *master* node.
+
+![Choose EC2 Instance Type](choose-instance-type.png)
+
+![Configure EC2 instance with security settings](configure-instance.png)
+
+![Add storage as per usage requirements](add-storage.png)
+
+You are required to create a Keypair if you don't have one already. This can be done using this [AWS-EC2 interface][] console.
+
+![Review and launch your master instance](review-and-launch.png)
+
+1. Name your master instance. This is important for getting your instances settings. Call it "AWSParallelMaster"
 
 1. SSH into the instance, which will be 
+
+    ssh -i ~/.ssh/AWSparallel-test-keypair.pem ubuntu@34.239.248.175
+    
+1. Once you are logged in, there are a few things you need to set up. Install the `AWSParallel` package in your R prompt.
+
+    biocLite(`AWSParallel`)
+    
+If you have a dependency error installing AWSParallel, because of missing dependencies, i.e `aws.ec2` and `aws.signature`
+
+Try,
+
+    install.packages("aws.ec2", repos = c(getOption("repos"), "http://cloudyr.github.io/drat"))
+
+1. Copy your AWS credentials to this machine, by writing your credentials in the `~/.aws/credentials` directory.
+
+1. Copy you AWS SSH keypair file (.pem) file to the machine as well. The `.pem` file needs to have permissions to read only, i.e run `chmod 400 AWSparallel-test-keypair.pem` if you get a permissions error.
+
 
 
 # Session Info
@@ -201,3 +239,7 @@ sessionInfo()
 [configuring AWS credentials]:http://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
 
 [AWS-EC2 interface]:http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html#having-ec2-create-your-key-pair
+
+[AWS Pricing]:https://aws.amazon.com/ec2/pricing/
+
+[Instance types]: https://aws.amazon.com/ec2/instance-types/

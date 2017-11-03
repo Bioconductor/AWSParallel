@@ -18,7 +18,7 @@ getAwsAmiId <- function()
 
 
 #' Describe the VPC that needs to be used
-#' 
+#'
 #' @param cidr character, CIDR block for the VPC
 #' @return vpc information
 #' @importFrom aws.ec2 create_vpc
@@ -40,11 +40,35 @@ getAwsAmiId <- function()
     ##    new_vpc
 }
 
+
+
+#' importFrom aws.ec2 describe_instances
+.awsDetectMasterOnEC2 <- function()
+{
+    instances <- describe_instances()
+    hostname <- system2("hostname", stdout=TRUE)
+    hostname <- gsub("-",".", sub("ip-","", hostname))
+    for (i in 1:length(instances)) {
+        privateIpAddress = sapply(instances[[i]][["instancesSet"]], `[[`, "privateIpAddress")
+        if (hostname == privateIpAddress[1]) {
+            subnet <- sapply(instances[[i]][["instancesSet"]], `[[`, "subnetId")    
+        }
+    }
+    if (is.na(subnet)) {
+        stop("You are not a recognized AWS EC2 instance")
+    } else {
+        subnet
+    }
+}
+
+
+
 #' Describe the Subnet that needs to be used
-#' 
+#'
 #' @param vpc character subnet is created within the given VPC-ID
 #' @return subnet information
 #' @importFrom aws.ec2 create_subnet
+#' @importFrom aws.ec2 describe_subnets
 .awsDetectSubnet <- function(vpc)
 {
     subnets <- describe_subnets()
@@ -55,6 +79,11 @@ getAwsAmiId <- function()
     if (length(idx) >= 1) {
         one_idx = idx[1]
         awsSubnet <- subnets[[one_idx]]
+        ## TODO: This is a hack,
+        checkSubnetOnMaster <- .awsDetectMasterOnEC2()
+        if (checkSubnetOnMaster != awsSubnet) {
+            awsSubnet <- checkSubnetOnMaster
+        }
     } else {
         ## If no subnet is available in that VPC,
         ## create one
@@ -69,6 +98,7 @@ getAwsAmiId <- function()
 #' @return security group information
 #' @importFrom aws.ec2 create_sgroup
 #' @importFrom aws.ec2 authorize_ingress
+#' @importFrom aws.ec2 describe_sgroups
 .awsDetectSecurityGroup <- function(vpc)
 {
     ## TODO: add error checking to see if sg exists
@@ -107,5 +137,3 @@ getAwsRequirements <- function()
     ## Return a named list of vpc, subnet and security group
     list(vpc=vpc, subnet=subnet, sgroup=sg)
 }
-
-
