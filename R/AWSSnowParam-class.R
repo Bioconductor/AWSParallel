@@ -330,8 +330,7 @@ setMethod("bpstart", "AWSSnowParam",
         type=awsInstanceType(x),
         min=awsWorkers(x),
         subnet=awsSubnet(x),
-        sgroup=awsSecurityGroup(x),
-        keypair=awsSshKeyPair(x)
+        sgroup=awsSecurityGroup(x)
     )
     ## Print instance state to screen after starting instance
     x$awsInstance <- result
