@@ -17,7 +17,10 @@ getAwsAmiId <- function()
 }
 
 
+#' Describe the VPC that needs to be used
+#' 
 #' @param cidr character, CIDR block for the VPC
+#' @return vpc information
 #' @importFrom aws.ec2 create_vpc
 #' @importFrom aws.ec2 describe_vpcs
 .awsDetectVpc <- function(cidr = "10.0.0.0/16")
@@ -37,8 +40,10 @@ getAwsAmiId <- function()
     ##    new_vpc
 }
 
-
+#' Describe the Subnet that needs to be used
+#' 
 #' @param vpc character subnet is created within the given VPC-ID
+#' @return subnet information
 #' @importFrom aws.ec2 create_subnet
 .awsDetectSubnet <- function(vpc)
 {
@@ -58,8 +63,10 @@ getAwsAmiId <- function()
     awsSubnet
 }
 
-
+#' Detect the security group which needs to be used
+#'
 #' @param vpc character Security Group is created within given VPC-ID
+#' @return security group information
 #' @importFrom aws.ec2 create_sgroup
 #' @importFrom aws.ec2 authorize_ingress
 .awsDetectSecurityGroup <- function(vpc)
@@ -85,7 +92,11 @@ getAwsAmiId <- function()
     sg
 }
 
-
+#' Get AWS security requirements
+#'
+#' Security requirements to launch the EC2 instances into
+#' a VPC, subnet, and security group
+#' @return list, containing VPC, subnet, security group information
 #' @export
 getAwsRequirements <- function()
 {

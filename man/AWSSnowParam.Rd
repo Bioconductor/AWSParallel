@@ -4,7 +4,7 @@
 \alias{AWSSnowParam}
 \title{AWSSnowParam function to start an AWS EC2-instance cluster}
 \usage{
-AWSSnowParam(workers = 1, awsCredentialsPath = NA_character_,
+AWSSnowParam(workers = 2, awsCredentialsPath = NA_character_,
   awsInstanceType = NA_character_, awsSubnet = NA, awsSecurityGroup = NA,
   awsAmiId = NA_character_, awsSshKeyPair = NA_character_,
   user = "ubuntu", rhome = "/usr/local/lib/R",
@@ -20,7 +20,14 @@ AWSSnowParam(workers = 1, awsCredentialsPath = NA_character_,
 
 \item{awsSubnet}{character, AWS EC2-instance subnet, within a certain VPC}
 
-\item{awsSecurityGroup}{character, Secutiry group which assigns inbound and outbound traffic at the instance level}
+\item{awsSecurityGroup}{character, Security group which assigns inbound and outbound traffic at the instance level. The security group needs to be
+*Inbound rules*
+Protocol type    Port number    Source IP
+          TCP    22 (SSH)    0.0.0.0/0
+          TCP    11000-11999    CIDR-Block same as VPC
+*Outbound rules*
+Protocol type    Port number    Destination IP
+          All    All            0.0.0.0/0}
 
 \item{awsAmiId}{character, AMI(amazon machine image) ID for the Bioconductor-release version}
 
@@ -36,9 +43,10 @@ to allow computation with Bioconductor objects
 }
 \examples{
 \dontrun{
+        ## Minimal example
         aws <- AWSSnowParam(workers = 1,
                awsInstanceType="t2.micro",
                awsAmiId= image,
-               awsSshKeyPair = "~/.ssh/id_rsa.pub")
+               awsSshKeyPair = "~/.ssh/<my_aws_key_pair>.pub")
 }
 }

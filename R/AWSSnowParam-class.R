@@ -128,7 +128,7 @@ AWSSnowParam <- function(workers = 2,
     if (missing(awsSubnet) || missing(awsSecurityGroup)) {
         reqs <- getAwsRequirements()
         ## Allocate subnet and securityGroup as need
-        awsSubnet <- reqs$subnet$subnet$subnetId[[1]]
+        awsSubnet <- reqs$subnet$subnetId
         awsSecurityGroup <- reqs$sgroup$groupId
     }
     
