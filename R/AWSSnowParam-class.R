@@ -131,7 +131,7 @@ AWSSnowParam <- function(workers = 2,
         awsSubnet <- reqs$subnet$subnetId
         awsSecurityGroup <- reqs$sgroup$groupId
     }
-    
+
     .clusterargs <- list(
         spec = workers, type = "SOCK",
         ## TODO: Remove verbose argument -v
@@ -148,7 +148,7 @@ AWSSnowParam <- function(workers = 2,
         ## base class (SnowParam) fields
         workers = workers,
         ## TODO: There is no `-i` in OS-X
-        hostname = system2("hostname", "-i", stdout=TRUE),
+        hostname = system2("hostname", stdout=TRUE),
         .clusterargs = .clusterargs,
         ## AWSSnowParam fields
         awsCredentialsPath = awsCredentialsPath,
