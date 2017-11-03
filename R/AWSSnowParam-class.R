@@ -128,7 +128,7 @@ AWSSnowParam <- function(workers = 2,
     if (missing(awsSubnet) || missing(awsSecurityGroup)) {
         reqs <- getAwsRequirements()
         ## Allocate subnet and securityGroup as need
-        awsSubnet <- reqs$subnet$subnetId
+        awsSubnet <- reqs$subnet
         awsSecurityGroup <- reqs$sgroup$groupId
     }
 
@@ -330,7 +330,8 @@ setMethod("bpstart", "AWSSnowParam",
         type=awsInstanceType(x),
         min=awsWorkers(x),
         subnet=awsSubnet(x),
-        sgroup=awsSecurityGroup(x)
+        sgroup=awsSecurityGroup(x),
+        keypair=awsSshKeyPair(x)
     )
     ## Print instance state to screen after starting instance
     x$awsInstance <- result

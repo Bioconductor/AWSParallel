@@ -81,13 +81,14 @@ getAwsAmiId <- function()
         awsSubnet <- subnets[[one_idx]]
         ## TODO: This is a hack,
         checkSubnetOnMaster <- .awsDetectMasterOnEC2()
-        if (checkSubnetOnMaster != awsSubnet) {
+        if (!identical(checkSubnetOnMaster,awsSubnet)) {
             awsSubnet <- checkSubnetOnMaster
         }
     } else {
         ## If no subnet is available in that VPC,
         ## create one
         awsSubnet <- create_subnet(vpc, cidr=vpc$cidrBlock)
+        awsSubnet <- awsSubnet$subnet$subnetId
     }
     awsSubnet
 }
