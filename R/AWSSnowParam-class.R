@@ -49,68 +49,6 @@
 )
 
 
-
-#' Get name of bioconductor release version AMI
-#'
-#' @return Bioconductor release version
-#' @importFrom httr GET
-#' @importFrom httr content
-#' @importFrom yaml yaml.load
-#' @importFrom httr stop_for_status
-#' @export
-getAwsAmiId <- function()
-{
-    res <- GET("https://www.bioconductor.org/config.yaml")
-    stop_for_status(res)
-    content <- content(res, type="text", encoding="UTF-8")
-    txt <- yaml.load(content)
-    release_version <- sub(".", "_", txt$release_version, fixed=TRUE)
-    txt$ami_ids[[paste0("bioc",release_version)]]
-}
-
-
-#' @importFrom aws.ec2 create_vpc
-.awsCreateVpc <- function(cidr = "10.0.0.0/16")
-{
-    ## Using default VPC settings
-    new_vpc <- create_vpc(cidr)
-    new_vpc
-}
-
-#' @importFrom aws.ec2 create_subnet
-.awsCreateSubnet <- function(vpc)
-{
-    awsSubnet <- create_subnet(vpc, cidr=vpc$cidrBlock)
-    awsSubnet
-}
-
-
-#' @importFrom aws.ec2 create_sgroup
-#' @importFrom aws.ec2 authorize_ingress
-.awsCreateSecurityGroup <- function(vpc)
-{
-    ## TODO: add error checking to see if sg exists
-    ## create sgroup
-    sg <- create_sgroup("AWSParallel_sgroup", "Security group for AWSParallel", vpc = vpc)
-    ## Add TCP port range between 11000 to 11999
-    authorize_ingress(sg, port=c(11000,11999), protocol="tcp", cidr=vpc$cidrBlock)
-    ## Add SSH 22 port 
-    authorize_ingress(sg, port=22, protocol="tcp", cidr="0.0.0.0/0")
-    sg
-}
-
-getAwsRequirements <- function()
-{
-    ## If user passes in CIDR block, does it get passed in?
-    vpc <- .awsCreateVpc()
-    message("After running your AWSParallel Job, you may delete your newly created VPC: ", vpc, "\n\n")
-    subnet <- .awsCreateSubnet(vpc)
-    sg <- .awsCreateSecurityGroup(vpc)
-    ## Return a named list of vpc, subnet and security group
-    list(vpc=vpc, subnet=subnet, sgroup=sg)
-}
-
-
 #' AWSSnowParam function to start an AWS EC2-instance cluster
 #'
 #' This function starts a cluster of AWS EC2-instances to allow
@@ -121,7 +59,14 @@ getAwsRequirements <- function()
 #' @param awsCredentialsPath character, Path to AWS credentials, default value is `~/.aws/credentials`
 #' @param awsInstanceType character, Type of AWS EC2-instance, eg. t2.micro
 #' @param awsSubnet character, AWS EC2-instance subnet, within a certain VPC
-#' @param awsSecurityGroup character, Secutiry group which assigns inbound and outbound traffic at the instance level
+#' @param awsSecurityGroup character, Security group which assigns inbound and outbound traffic at the instance level. The security group needs to be
+#' *Inbound rules*
+#' Protocol type	Port number	Source IP
+#'           TCP	22 (SSH)	0.0.0.0/0
+#'           TCP	11000-11999	CIDR-Block same as VPC
+#' *Outbound rules*
+#' Protocol type	Port number	Destination IP
+#'           All	All	        0.0.0.0/0
 #' @param awsAmiId character, AMI(amazon machine image) ID for the Bioconductor-release version
 #' @param awsSshKeyPair character, SSH key pair, to associate with your AWS EC2-instance
 #' @return AWSSnowParam object
@@ -146,6 +91,7 @@ AWSSnowParam <- function(workers = 2,
              awsSshKeyPair = NA_character_,
              user="ubuntu",
              rhome="/usr/local/lib/R",
+             ## TODO: change this default
              bplib="/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4/BiocParallel",
              rscript = "/usr/local/bin/Rscript",
              outfile = "/home/ubuntu/snow.log"
@@ -347,8 +293,7 @@ awsSecurityGroup <-
 #'
 #' @return AWSSnowParam object
 #' @export
-awsCluster <-
-    function()
+awsCluster <- function()
 {
     if (!.awsCluster$isup()) {
         stop("no existing cluster")
@@ -413,8 +358,7 @@ setMethod("bpstart", "AWSSnowParam",
 # Check status of aws ec2 instance
 #' @importFrom aws.ec2 instance_status
 #' @export
-awsInstanceStatus <-
-    function(x)
+awsInstanceStatus <- function(x)
 {
     instance <- awsInstance(x)
     if (length(instance) == 0L) {
@@ -429,11 +373,12 @@ awsInstanceStatus <-
     }
 }
 
-.awsisup <-
-    function(x)
+#' Check if AWS cluster is up
+.awsisup <- function(x)
 {
     awsInstanceStatus(x) == "running"
 }
+
 
 #' @importFrom aws.ec2 terminate_instances
 #' @importFrom BiocParallel bpstop
