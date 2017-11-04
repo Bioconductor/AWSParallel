@@ -11,11 +11,21 @@ vignette: >
 
 # Introduction
 
-The AWSParallel package provides functionality to perform parallel evaluation using AWS infrastructure, most importantly EC2. It extends the `SnowParam` class in BiocParallel, and works with the same range of R and Bioconductor objects as `SnowParam`.
+The AWSParallel package provides functionality to perform parallel
+evaluation using AWS infrastructure, most importantly EC2. It extends
+the `SnowParam` class in BiocParallel, and works with the same range
+of R and Bioconductor objects as `SnowParam`.
 
-The goal of the AWSParallel package is allow the user to create a cluster of EC2 machines on AWS, and run `bplapply` from one "master" node(EC2 machine) to send a task to "worker" machines. It is important to note, that both master and worker nodes are on EC2. The user would have to start an instance, manually, and use this machine as master.
+The goal of the AWSParallel package is allow the user to create a
+cluster of EC2 machines on AWS, and run `bplapply` from one "master"
+node(EC2 machine) to send a task to "worker" machines. It is important
+to note, that both master and worker nodes are on EC2. The user would
+have to start an instance, manually, and use this machine as master.
 
-This package requires that the user have an Amazon AWS account that *costs money*, and requires a credit card to access. The AWS credentials provided by the user also need access, to other AWS services as well, namely, 
+This package requires that the user have an Amazon AWS account that
+*costs money*, and requires a credit card to access. The AWS
+credentials provided by the user also need access, to other AWS
+services as well, namely,
 
     1. IAM
     2. VPC  
@@ -23,7 +33,9 @@ This package requires that the user have an Amazon AWS account that *costs money
 
 # Quick Start
 
-The quick start guide assumes you have your AWS access key, and secret key in `~/.aws/credentials`. Please refer to the detailed section of the vignette if these settings are not present.
+The quick start guide assumes you have your AWS access key, and secret
+key in `~/.aws/credentials`. Please refer to the detailed section of
+the vignette if these settings are not present.
 
 ```{r, eval=FALSE}
 library(AWSParallel)
@@ -70,11 +82,16 @@ Settings required to get the package working on AWS.
 
 ## Get AWS Credntials
 
-To use AWSParallel, AWS credentials are a requirement. The credentials are given through [AWS Identity and Access management - IAM][]. The user needs an AWS access key and secret key.
+To use AWSParallel, AWS credentials are a requirement. The credentials
+are given through [AWS Identity and Access management - IAM][]. The
+user needs an AWS access key and secret key.
 
-These AWS credntials should be stored on your machine accessible at `~/.aws/credentials`, as given in the documentation for [configuring AWS credentials][].
+These AWS credntials should be stored on your machine accessible at
+`~/.aws/credentials`, as given in the documentation for
+[configuring AWS credentials][].
 
-Example AWS credentials, which need to be in the file, "~/.aws/credentials".
+Example AWS credentials, which need to be in the file,
+"~/.aws/credentials".
 
 
     [default]
@@ -82,26 +99,33 @@ Example AWS credentials, which need to be in the file, "~/.aws/credentials".
     aws_secret_access_key=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 
 
-The AWS credentials provided to the package need access to a few components of the AWS account,
+The AWS credentials provided to the package need access to a few
+components of the AWS account,
 
-1. IAM - This is used to get the credentials, change credentials, activate/deactivate credentials
-        for security reasons.
-1. VPC - This is used to detect VPC's in the region, so that all the instances launched are within
-        the same VPC, and same subnet.
-1. EC2 - This is used to launch, run, and terminate instances as needed. 
+1. IAM - This is used to get the credentials, change credentials,
+   activate/deactivate credentials for security reasons.
+1. VPC - This is used to detect VPC's in the region, so that all the
+   instances launched are within the same VPC, and same subnet.
+1. EC2 - This is used to launch, run, and terminate instances as
+   needed.
 
 ## AWS Key Pair
 
-User's also need to create a KeyPair which needs to be accessible on the machine being used. The Key Pair can be created using the [AWS-EC2 interface][].
+User's also need to create a KeyPair which needs to be accessible on
+the machine being used. The Key Pair can be created using the
+[AWS-EC2 interface][].
 
-It can also be done programmatically using the `AWSParallel` package but the functionality is imported from `aws.ec2`.
+It can also be done programmatically using the `AWSParallel` package
+but the functionality is imported from `aws.ec2`.
 
 ```{r eval=FALSE}
 library(AWSParallel)
 ## Use credentials in your ~/.aws/crentials file
 aws.signature::use_credentials()
 ## This saves the `.pem` file in your your path ~/AWSParallel-keypair.pem
-aws.ec2::create_keypair(keypair = "AWSParallel-key", path="~/AWSParallel-keypair.pem")
+aws.ec2::create_keypair(
+    keypair = "AWSParallel-key", path="~/AWSParallel-keypair.pem"
+)
 
 ## Key pair to be passed in to your AWSSnowParam class
 awsSshKeyPair = "~/AWSParallel-keypair.pem"
@@ -109,22 +133,34 @@ awsSshKeyPair = "~/AWSParallel-keypair.pem"
 
 ## VPC and Subnet (Optional)
 
-Every AWS account has a default *VPC* created when the account is started. This VPC is usually contained to one AWS Region. Most of the Bioconductor AMI's are located on the *AWS-Region US-EAST*, so starting your account with a VPC located in that region makes most sense.
+Every AWS account has a default *VPC* created when the account is
+started. This VPC is usually contained to one AWS Region. Most of the
+Bioconductor AMI's are located on the *AWS-Region US-EAST*, so
+starting your account with a VPC located in that region makes most
+sense.
 
-If the VPC is created(by the user or amazon default), the account gets *Subnets* as well by default. For the `AWSSnowParam` class to be created, the user has to specify the Subnet. If the subnet is not given, we use, the first one on the AWS account. 
+If the VPC is created(by the user or amazon default), the account gets
+*Subnets* as well by default. For the `AWSSnowParam` class to be
+created, the user has to specify the Subnet. If the subnet is not
+given, we use, the first one on the AWS account.
 
-*NOTE:* The *master* instance and the *worker* instances need to be on the same VPC and subnet with permissible security groups. Without this the socket connection established with other machines launched on AWS does not work well.
+*NOTE:* The *master* instance and the *worker* instances need to be on
+the same VPC and subnet with permissible security groups. Without this
+the socket connection established with other machines launched on AWS
+does not work well.
 
 ## Security Group settings (Optional)
 
-Security groups are probably the most important AWS setting required in AWSParallel. It's easier if 
+Security groups are probably the most important AWS setting required
+in AWSParallel. It's easier if
 
 ![Security Group Inbound Rules](inbound_rules.png)
 
 ![Security Group Outbound Rules](outbound_rules.png)
 
 
-Once you have the following AWS components set up, you are ready to use the package
+Once you have the following AWS components set up, you are ready to
+use the package
 
 # Working with the package AWSParallel
 
@@ -185,48 +221,68 @@ bpstop(aws)
 
 # Choosing AWS EC2 Instance Size
 
-The size of an AWS-EC2 Instance gives you access to the required amount of compute power. Larger instances usually have a higher capacity for computing, but also cost more money. The [AWS Pricing][] is given in the documentation, and we recommend you take a look at it.
+The size of an AWS-EC2 Instance gives you access to the required
+amount of compute power. Larger instances usually have a higher
+capacity for computing, but also cost more money. The [AWS Pricing][]
+is given in the documentation, and we recommend you take a look at it.
 
-The Bioconductor AMI's have been built using the *m4.xlarge* machine. So ideally to run a large computation, and use every package available in Bioconductor you would use your worker of size *m4.xlarge*. If you are using a limited set of packages, or you just need to run a job in parallel, it would be easier to take a look at the [Instance types][] and decide the appropriate size for your needs.
+The Bioconductor AMI's have been built using the *m4.xlarge*
+machine. So ideally to run a large computation, and use every package
+available in Bioconductor you would use your worker of size
+*m4.xlarge*. If you are using a limited set of packages, or you just
+need to run a job in parallel, it would be easier to take a look at
+the [Instance types][] and decide the appropriate size for your needs.
 
 
 # Steps to prepare master instance.
 
-This process can be done ONE time, and the instance can be stopped without being terminated. This *master* instance can be reused.
+This process can be done ONE time, and the instance can be stopped
+without being terminated. This *master* instance can be reused.
 
-1. Create a new amazon EC2 instance which is going to be the *master* node, by choosing the AMI-ID from this page, http://bioconductor.org/help/bioconductor-cloud-ami/#ami_ids. Follow the steps in the ec2 management console to launch the image.
+1. Create a new amazon EC2 instance which is going to be the *master*
+   node, by choosing the AMI-ID from this page,
+   http://bioconductor.org/help/bioconductor-cloud-ami/#ami_ids. Follow
+   the steps in the ec2 management console to launch the image.
 
-![Choose EC2 Instance Type](choose-instance-type.png)
+    ![Choose EC2 Instance Type](choose-instance-type.png)
 
-![Configure EC2 instance with security settings](configure-instance.png)
+    ![Configure EC2 instance with security settings](configure-instance.png)
 
-![Add storage as per usage requirements](add-storage.png)
+    ![Add storage as per usage requirements](add-storage.png)
 
-You are required to create a Keypair if you don't have one already. This can be done using this [AWS-EC2 interface][] console.
+    You are required to create a Keypair if you don't have one
+    already. This can be done using this [AWS-EC2 interface][]
+    console.
 
-![Review and launch your master instance](review-and-launch.png)
+    ![Review and launch your master instance](review-and-launch.png)
 
-1. Name your master instance. This is important for getting your instances settings. Call it "AWSParallelMaster"
+1. Name your master instance. This is important for getting your
+   instances settings. Call it "AWSParallelMaster"
 
 1. SSH into the instance, which will be 
 
-    ssh -i ~/.ssh/AWSparallel-test-keypair.pem ubuntu@34.239.248.175
+        ssh -i ~/.ssh/AWSparallel-test-keypair.pem ubuntu@34.239.248.175
     
-1. Once you are logged in, there are a few things you need to set up. Install the `AWSParallel` package in your R prompt.
+1. Once you are logged in, there are a few things you need to set
+   up. Install the `AWSParallel` package in your R prompt.
 
-    biocLite(`AWSParallel`)
+        biocLite(`AWSParallel`)
     
-If you have a dependency error installing AWSParallel, because of missing dependencies, i.e `aws.ec2` and `aws.signature`
+    If you have a dependency error installing AWSParallel, because of
+    missing dependencies, i.e `aws.ec2` and `aws.signature`, try
 
-Try,
+        install.packages(
+            "aws.ec2", repos = c(getOption("repos"), 
+            "http://cloudyr.github.io/drat")
+        )
 
-    install.packages("aws.ec2", repos = c(getOption("repos"), "http://cloudyr.github.io/drat"))
+1. Copy your AWS credentials to this machine, by writing your
+   credentials in the `~/.aws/credentials` directory.
 
-1. Copy your AWS credentials to this machine, by writing your credentials in the `~/.aws/credentials` directory.
-
-1. Copy you AWS SSH keypair file (.pem) file to the machine as well. The `.pem` file needs to have permissions to read only, i.e run `chmod 400 AWSparallel-test-keypair.pem` if you get a permissions error.
-
-
+1. Copy you AWS SSH keypair file (.pem) file to the machine as
+   well. The `.pem` file needs to have permissions to read only, i.e
+   run `chmod 400 AWSparallel-test-keypair.pem` if you get a
+   permissions error.
 
 # Session Info
 
