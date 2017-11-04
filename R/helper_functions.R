@@ -48,7 +48,7 @@ getAwsAmiId <- function()
     instances <- describe_instances()
     hostname <- system2("hostname", stdout=TRUE)
     hostname <- gsub("-",".", sub("ip-","", hostname))
-    for (i in 1:length(instances)) {
+    for (i in seq_along(instances)) {
         privateIpAddress = sapply(
             instances[[i]][["instancesSet"]], `[[`, "privateIpAddress"
         )
@@ -76,7 +76,7 @@ getAwsAmiId <- function()
 .awsDetectSubnet <- function(vpc)
 {
     subnets <- describe_subnets()
-    subnet_vpc_id <- sapply(subnets, `[[`, "vpcId")
+    subnet_vpc_id <- vapply(subnets, `[[`, character(1), "vpcId")
     ## Find subnet with same VPC ID
     idx <- grep(vpc$vpcId, subnet_vpc_id)
     ## Get subnet in VPC
@@ -108,7 +108,7 @@ getAwsAmiId <- function()
 {
     ## TODO: add error checking to see if sg exists
     sgroups <- describe_sgroups()
-    group_names <- sapply(sgroups, `[[`, "groupName")
+    group_names <- vapply(sgroups, `[[`, character(1), "groupName")
     idx <- grep("AWSParallel_sgroup", group_names)
     if (length(idx) !=0 ) {
         sg <- sgroups[[idx]]
