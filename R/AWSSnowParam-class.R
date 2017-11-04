@@ -1,17 +1,22 @@
 #' Reference class .AWSSnowParam that allows usage of AWS EC2-instances
 #'
-#' The .AWSSnowParam class extends the SnowParam class
-#' to allow usage of AWS EC2-instances for parallel computation.
-#' The methods follow a style similar to that of BiocParallelParams,
-#' with bpstart, bpstop, bpisup, bplapply being the important one.
+#' The .AWSSnowParam class extends the SnowParam class to allow usage
+#' of AWS EC2-instances for parallel computation.  The methods follow
+#' a style similar to that of BiocParallelParams, with bpstart,
+#' bpstop, bpisup, bplapply being the important one.
 #'
-#' @field awsCredentialsPath Path to AWS credentials, default value is `~/.aws/credentials`
+#' @field awsCredentialsPath Path to AWS credentials, default value is
+#'     `~/.aws/credentials`
 #' @field awsInstanceType Type of AWS EC2-instance, eg. t2.micro
 #' @field awsSubnet AWS EC2-instance subnet, within a certain VPC
-#' @field awsSecurityGroup Secutiry group which assigns inbound and outbound traffic at the instance level
-#' @field awsInstance A list, created holding all the information of the AWS instance
-#' @field awsAmiId AMI(amazon machine image) ID for the Bioconductor-release version
-#' @field awsSshKeyPair SSH key pair, to associate with your AWS EC2-instance
+#' @field awsSecurityGroup Secutiry group which assigns inbound and
+#'     outbound traffic at the instance level
+#' @field awsInstance A list, created holding all the information of
+#'     the AWS instance
+#' @field awsAmiId AMI(amazon machine image) ID for the
+#'     Bioconductor-release version
+#' @field awsSshKeyPair SSH key pair, to associate with your AWS
+#'     EC2-instance
 #' @importFrom methods new validObject callNextMethod
 #' @importClassesFrom BiocParallel SnowParam BiocParallelParam
 .AWSSnowParam <- setRefClass(
@@ -30,18 +35,13 @@
         show = function() {
             callSuper()
             ## Display only half of AWS access and secret keys
-            cat("  awsCredentialsPath: ",
-                awsCredentialsPath(.self),
-                "\n",
-                "  awsInstanceType: ", awsInstanceType(.self),
-                "\n",
-                "  awsSubnet: ", awsSubnet(.self),
-                "\n",
-                "  awsSecurityGroup(s): ", paste(awsSecurityGroup(.self), sep=" ", collapse=" "),
-                "\n",
-                "  awsAmiId: ", awsAmiId(.self),
-                "\n",
-                "  awsSshKeyPair: ", awsSshKeyPair(.self),
+            cat("  awsCredentialsPath: ", awsCredentialsPath(.self),
+                "\n  awsInstanceType: ", awsInstanceType(.self),
+                "\n  awsSubnet: ", awsSubnet(.self),
+                "\n  awsSecurityGroup(s): ",
+                     paste(awsSecurityGroup(.self), sep=" ", collapse=" "),
+                "\n  awsAmiId: ", awsAmiId(.self),
+                "\n  awsSshKeyPair: ", awsSshKeyPair(.self),
                 "\n",
                 sep = "")
         }
@@ -53,23 +53,26 @@
 #' AWSSnowParam function to start an AWS EC2-instance cluster
 #'
 #' This function starts a cluster of AWS EC2-instances to allow
-#' parallel computation of R objects, and works with BiocParallel,
-#' to allow computation with Bioconductor objects
+#' parallel computation of R objects, and works with BiocParallel, to
+#' allow computation with Bioconductor objects
 #'
 #' @param workers Numeric, number of workers to launch in the cluster
-#' @param awsCredentialsPath character, Path to AWS credentials, default value is `~/.aws/credentials`
-#' @param awsInstanceType character, Type of AWS EC2-instance, eg. t2.micro
-#' @param awsSubnet character, AWS EC2-instance subnet, within a certain VPC
-#' @param awsSecurityGroup character, Security group which assigns inbound and outbound traffic at the instance level. The security group needs to be
-#' *Inbound rules*
-#' Protocol type	Port number	Source IP
-#'           TCP	22 (SSH)	0.0.0.0/0
-#'           TCP	11000-11999	CIDR-Block same as VPC
-#' *Outbound rules*
-#' Protocol type	Port number	Destination IP
-#'           All	All	        0.0.0.0/0
-#' @param awsAmiId character, AMI(amazon machine image) ID for the Bioconductor-release version
-#' @param awsSshKeyPair character, SSH key pair, to associate with your AWS EC2-instance
+#' @param awsCredentialsPath character, Path to AWS credentials,
+#'     default value is `~/.aws/credentials`
+#' @param awsInstanceType character, Type of AWS EC2-instance,
+#'     eg. t2.micro
+#' @param awsSubnet character, AWS EC2-instance subnet, within a
+#'     certain VPC
+#' @param awsSecurityGroup character, Security group which assigns
+#'     inbound and outbound traffic at the instance level. The
+#'     security group needs to be *Inbound rules* Protocol type Port
+#'     number Source IP TCP 22 (SSH) 0.0.0.0/0 TCP 11000-11999
+#'     CIDR-Block same as VPC *Outbound rules* Protocol type Port
+#'     number Destination IP All All 0.0.0.0/0
+#' @param awsAmiId character, AMI(amazon machine image) ID for the
+#'     Bioconductor-release version
+#' @param awsSshKeyPair character, SSH key pair, to associate with
+#'     your AWS EC2-instance
 #' @return AWSSnowParam object
 #' @examples
 #' \dontrun{
@@ -204,9 +207,11 @@ awsInstance <-
 
 #' Get AWS Instance type.
 #'
-#' The possible instance types are listed in the document:https://aws.amazon.com/ec2/instance-types/.
-#' The Bioconductor AMI's have been built using an m4.xlarge instance type.
-#' Large computations are best supported on this type of instance.
+#' The possible instance types are listed in the
+#' document: https://aws.amazon.com/ec2/instance-types/.  The
+#' Bioconductor AMI's have been built using an m4.xlarge instance
+#' type.  Large computations are best supported on this type of
+#' instance.
 #'
 #' @param AWSSnowParam object
 #'
@@ -252,8 +257,8 @@ awsSshKeyPair <-
     x$awsSshKeyPair
 }
 
-#' Get AWS Security group for the EC2 instance, which defines inbound and
-#' outbound traffic.
+#' Get AWS Security group for the EC2 instance, which defines inbound
+#' and outbound traffic.
 #'
 #' @param AWSSnowParam
 #'
@@ -268,8 +273,8 @@ awsSecurityGroup <-
 ### Methods - control
 ###
 
-## Create a local enviroment to store the cluster created. This allows for
-## only a single AWSSnowParam object to be present at a time.
+## Create a local enviroment to store the cluster created. This allows
+## for only a single AWSSnowParam object to be present at a time.
 .awsCluster <- local({
     cl <- NULL
     list(
@@ -289,8 +294,8 @@ awsSecurityGroup <-
     )
 })
 
-#' Get the AWSSnowParam object currently launched. Only one AWSSnowParam object can be
-#' started within one session.
+#' Get the AWSSnowParam object currently launched. Only one
+#' AWSSnowParam object can be started within one session.
 #'
 #' @return AWSSnowParam object
 #' @export
@@ -307,7 +312,11 @@ awsCluster <- function()
 .awsClusterIps <- function(x)
 {
     instances <- describe_instances(awsInstance(x))
-    vapply(instances[[1]][["instancesSet"]], `[[`, character(1), "privateIpAddress")
+    vapply(
+        instances[[1]][["instancesSet"]],
+        `[[`, character(1),
+        "privateIpAddress"
+    )
 }
 
 
