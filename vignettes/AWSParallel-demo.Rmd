@@ -28,7 +28,7 @@ credentials provided by the user also need access, to other AWS
 services as well, namely,
 
     1. IAM
-    2. VPC  
+    2. VPC
     3. EC2
 
 # Quick Start
@@ -37,7 +37,9 @@ The quick start guide assumes you have your AWS access key, and secret
 key in `~/.aws/credentials`. Please refer to the detailed section of
 the vignette if these settings are not present.
 
-```{r, eval=FALSE}
+Load the [AWSParallel][] library and create an `AWSSnowParam`
+
+```{r}
 library(AWSParallel)
 
 # Number of workers
@@ -61,7 +63,11 @@ aws <- AWSSnowParam(
     awsAmiId= image,
     awsSshKeyPair = awsSshKeyPair
 )
+```
 
+Start, use, and stop a cluster.
+
+```{r, eval = FALSE}
 ## Start instance
 bpstart(aws)
 
@@ -74,7 +80,6 @@ xx <- bplapply(1:4, function(i) system("hostname", intern=TRUE), BPPARAM=aws)
 ## Stop aws instance(s)
 bpstop(aws) 
 ```
-
 
 # AWS settings
 
@@ -164,10 +169,12 @@ use the package
 
 # Working with the package AWSParallel
 
-We need to launch the Bioconductor AMI for the *release* version.
+We need to launch the Bioconductor AMI for the *release* version. Do
+this by creating an `AWSSnowParam` object
 
-```{r, eval=FALSE}
+FIXME: this code chunk should be written to be evaluated
 
+```{r, eval = FALSE}
 ## Load the package
 library(AWSParallel)
 
@@ -198,7 +205,11 @@ aws <- AWSSnowParam(
     awsSshKeyPair = path_to_key,
     awsCredentialsPath="/home/ubuntu/credentials"
     )
+```
 
+Then perform diagnostics, start, use, and stop the cluster
+
+```{r, eval = FALSE}
 aws
 ## Check if instance is up,
 awsInstanceStatus(aws)
