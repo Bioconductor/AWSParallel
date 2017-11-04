@@ -12,6 +12,7 @@
 #' @field awsInstance A list, created holding all the information of the AWS instance
 #' @field awsAmiId AMI(amazon machine image) ID for the Bioconductor-release version
 #' @field awsSshKeyPair SSH key pair, to associate with your AWS EC2-instance
+#' @importFrom methods new validObject callNextMethod
 #' @importClassesFrom BiocParallel SnowParam BiocParallelParam
 .AWSSnowParam <- setRefClass(
     "AWSSnowParam",
@@ -312,7 +313,7 @@ awsCluster <- function()
 
 #' @importFrom aws.ec2 run_instances
 #' @importFrom aws.signature use_credentials
-#' @importFrom BiocParallel bpstart
+#' @importFrom BiocParallel bpstart bpworkers<-
 #' @exportMethod bpstart
 setMethod("bpstart", "AWSSnowParam",
     function(x)

@@ -1,19 +1,19 @@
 Package: AWSParallel
 Type: Package
 Title: AWS facilities for parallel evaluation
-Version: 0.1.0
-Author@R: c(person("Bioconductor", "Package Maintainer", email="maintainer@bioconductor.org", role=c("aut",cre")),
+Version: 0.1.1
+Authors@R: c(
+    person("Bioconductor", "Package Maintainer", email="maintainer@bioconductor.org", role=c("aut", "cre")),
     person("Nitesh", "Turaga", role="aut", email="nitesh.turaga@roswellpark.org"),
-    person("Martin", "Morgan", role="aut")
-    )
+    person("Martin", "Morgan", role="aut"))
 Description: This package provides facilities to perform parallel evaluation with AWS infrastructure. It connects with BiocParallel, and works with Bioconductor objects.
 License: GPL-2 | GPL-3
 Depends: methods, utils, BiocParallel
 Imports:
     aws.ec2,
     aws.signature,
-    snow,
-    parallel
+    httr,
+    yaml
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.0.1
