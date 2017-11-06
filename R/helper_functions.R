@@ -48,10 +48,14 @@ getAwsAmiId <- function()
     instances <- describe_instances()
     hostname <- system2("hostname", stdout=TRUE)
     hostname <- gsub("-",".", sub("ip-","", hostname))
-    for (i in 1:length(instances)) {
-        privateIpAddress = sapply(instances[[i]][["instancesSet"]], `[[`, "privateIpAddress")
+    for (i in seq_along(instances)) {
+        privateIpAddress = sapply(
+            instances[[i]][["instancesSet"]], `[[`, "privateIpAddress"
+        )
         if (hostname == privateIpAddress[1]) {
-            subnet <- sapply(instances[[i]][["instancesSet"]], `[[`, "subnetId")    
+            subnet <- sapply(
+                instances[[i]][["instancesSet"]], `[[`, "subnetId"
+            )    
         }
     }
     if (is.na(subnet)) {
@@ -72,7 +76,7 @@ getAwsAmiId <- function()
 .awsDetectSubnet <- function(vpc)
 {
     subnets <- describe_subnets()
-    subnet_vpc_id <- sapply(subnets, `[[`, "vpcId")
+    subnet_vpc_id <- vapply(subnets, `[[`, character(1), "vpcId")
     ## Find subnet with same VPC ID
     idx <- grep(vpc$vpcId, subnet_vpc_id)
     ## Get subnet in VPC
@@ -104,29 +108,33 @@ getAwsAmiId <- function()
 {
     ## TODO: add error checking to see if sg exists
     sgroups <- describe_sgroups()
-    group_names <- sapply(sgroups, `[[`, "groupName")
+    group_names <- vapply(sgroups, `[[`, character(1), "groupName")
     idx <- grep("AWSParallel_sgroup", group_names)
     if (length(idx) !=0 ) {
         sg <- sgroups[[idx]]
     } else {
         ## create sgroup
-        sg <- create_sgroup(name="AWSParallel_sgroup",
-                            description="Security group for AWSParallel",
-                            vpc = vpc)
+        sg <- create_sgroup(
+            name="AWSParallel_sgroup",
+            description="Security group for AWSParallel",
+            vpc = vpc
+        )
         ## Add TCP port range between 11000 to 11999
-        authorize_ingress(sg, port=c(11000,11999),
-                          protocol="tcp", cidr=vpc$cidrBlock)
+        authorize_ingress(
+            sg, port=c(11000,11999), protocol="tcp", cidr=vpc$cidrBlock
+        )
         ## Add SSH 22 port
-        authorize_ingress(sg, port=22,
-                          protocol="tcp", cidr="0.0.0.0/0")
+        authorize_ingress(
+            sg, port=22, protocol="tcp", cidr="0.0.0.0/0"
+        )
     }
     sg
 }
 
 #' Get AWS security requirements
 #'
-#' Security requirements to launch the EC2 instances into
-#' a VPC, subnet, and security group
+#' Security requirements to launch the EC2 instances into a VPC,
+#' subnet, and security group
 #' @return list, containing VPC, subnet, security group information
 #' @export
 getAwsRequirements <- function()
