@@ -139,7 +139,10 @@ AWSSnowParam <- function(workers = 2,
     .clusterargs <- list(
         spec = workers, type = "SOCK",
         ## TODO: Remove verbose argument -v
-        rshcmd = paste("ssh -i", awsSshKeyPair, "-v", sep=" "),
+        ## Allow 'yes' to `Are you sure you want to continue connecting (yes/no)?`
+        ## using ssh -oStrictHostKeyChecking=no
+        ## ref: http://xmodulo.com/how-to-accept-ssh-host-keys-automatically-on-linux.html
+        rshcmd = paste("ssh -i", "-oStrictHostKeyChecking=no", awsSshKeyPair, "-v", sep=" "),
         user=user,
         rhome=rhome,
         snowlib=bplib,
