@@ -65,10 +65,14 @@
 #'     certain VPC
 #' @param awsSecurityGroup character, Security group which assigns
 #'     inbound and outbound traffic at the instance level. The
-#'     security group needs to be *Inbound rules* Protocol type Port
-#'     number Source IP TCP 22 (SSH) 0.0.0.0/0 TCP 11000-11999
-#'     CIDR-Block same as VPC *Outbound rules* Protocol type Port
-#'     number Destination IP All All 0.0.0.0/0
+#'     security group needs to be
+#' *Inbound rules*
+#' Protocol type   Port number   Source IP
+#'           TCP      22 (SSH)   0.0.0.0/0
+#'           TCP   11000-11999   CIDR-Block same as VPC
+#' *Outbound rules*
+#' Protocol type   Port number   Destination IP
+#'           All           All   0.0.0.0/0
 #' @param awsAmiId character, AMI(amazon machine image) ID for the
 #'     Bioconductor-release version
 #' @param awsSshKeyPair character, SSH key pair, to associate with
