@@ -6,7 +6,8 @@
 #' @importFrom yaml yaml.load
 #' @importFrom httr stop_for_status
 #' @export
-getAwsAmiId <- function()
+getAwsAmiId <-
+    function()
 {
     res <- GET("https://www.bioconductor.org/config.yaml")
     stop_for_status(res)
@@ -23,12 +24,13 @@ getAwsAmiId <- function()
 #' @return vpc information
 #' @importFrom aws.ec2 create_vpc
 #' @importFrom aws.ec2 describe_vpcs
-.awsDetectVpc <- function(cidr = "10.0.0.0/16")
+.awsDetectVpc <-
+    function(cidr = "10.0.0.0/16")
 {
     ## TODO: Fix this
     ## Needs IF Statment
     vpcs <- describe_vpcs()
-
+    
     if (length(vpcs) >= 1) {
         vpc <- vpcs[[1]]
     } else {
@@ -43,26 +45,26 @@ getAwsAmiId <- function()
 
 
 #' importFrom aws.ec2 describe_instances
-.awsDetectMasterOnEC2 <- function()
+.awsDetectSubnet <-
+    function()
 {
+    ## Get list of all instances on AWS account
     instances <- describe_instances()
+    ## Get hostname of local machine code is being run on
     hostname <- system2("hostname", stdout=TRUE)
     hostname <- gsub("-",".", sub("ip-","", hostname))
+    subnet <- NA_character_
     for (i in seq_along(instances)) {
-        privateIpAddress = sapply(
-            instances[[i]][["instancesSet"]], `[[`, "privateIpAddress"
-        )
-        if (hostname == privateIpAddress[1]) {
-            subnet <- sapply(
-                instances[[i]][["instancesSet"]], `[[`, "subnetId"
-            )    
+        instancesSet = instances[[i]][["instancesSet"]]
+        for (j in seq_along(instancesSet)) {
+            privateIpAddress <- instancesSet[[j]][["privateIpAddress"]]
+            if (privateIpAddress == hostname)
+                subnet <- instancesSet[[j]][["subnetId"]]
         }
     }
-    if (is.na(subnet)) {
+    if (is.na(subnet))
         stop("You are not a recognized AWS EC2 instance")
-    } else {
-        subnet
-    }
+    subnet
 }
 
 
@@ -73,22 +75,15 @@ getAwsAmiId <- function()
 #' @return subnet information
 #' @importFrom aws.ec2 create_subnet
 #' @importFrom aws.ec2 describe_subnets
-.awsDetectSubnet <- function(vpc)
+.awsDetectOrCreateSubnet <-
+    function(vpc)
 {
     subnets <- describe_subnets()
     subnet_vpc_id <- vapply(subnets, `[[`, character(1), "vpcId")
-    ## Find subnet with same VPC ID
-    idx <- grep(vpc$vpcId, subnet_vpc_id)
-    ## Get subnet in VPC
-    if (length(idx) >= 1) {
-        one_idx = idx[1]
-        awsSubnet <- subnets[[one_idx]]
-        ## TODO: This is a hack,
-        checkSubnetOnMaster <- .awsDetectMasterOnEC2()
-        if (!identical(checkSubnetOnMaster,awsSubnet)) {
-            awsSubnet <- checkSubnetOnMaster
-        }
-    } else {
+
+    awsSubnet <- .awsDetectSubnet()
+
+    if (is.na(awsSubnet)) {
         ## If no subnet is available in that VPC,
         ## create one
         awsSubnet <- create_subnet(vpc, cidr=vpc$cidrBlock)
@@ -104,7 +99,8 @@ getAwsAmiId <- function()
 #' @importFrom aws.ec2 create_sgroup
 #' @importFrom aws.ec2 authorize_ingress
 #' @importFrom aws.ec2 describe_sgroups
-.awsDetectSecurityGroup <- function(vpc)
+.awsDetectSecurityGroup <-
+    function(vpc)
 {
     ## TODO: add error checking to see if sg exists
     sgroups <- describe_sgroups()
@@ -131,13 +127,22 @@ getAwsAmiId <- function()
     sg
 }
 
+
+awsLaunchMasterOnEc2 <-
+    function()
+{
+    
+}
+
+
 #' Get AWS security requirements
 #'
 #' Security requirements to launch the EC2 instances into a VPC,
 #' subnet, and security group
 #' @return list, containing VPC, subnet, security group information
 #' @export
-getAwsRequirements <- function()
+getAwsRequirements <-
+    function()
 {
     ## If user passes in CIDR block, does it get passed in?
     vpc <- .awsDetectVpc()
