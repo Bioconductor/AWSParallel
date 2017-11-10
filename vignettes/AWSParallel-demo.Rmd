@@ -39,7 +39,7 @@ the vignette if these settings are not present.
 
 Load the [AWSParallel][] library and create an `AWSSnowParam`
 
-```{r}
+```{r, eval=TRUE}
 library(AWSParallel)
 
 # Number of workers
@@ -48,9 +48,7 @@ workers = 2
 ## bioc-release 3.6 on US-EAST-2 (Ohio region), this is not default.
 ## Look up AMI's you want to use, at 
 ## http://bioconductor.org/help/bioconductor-cloud-ami/#ami_ids
-image <- "ami-2951fa53"
-
-## "ami-a90c23cc"
+image <- "ami-a90c23cc"
 
 ## A AWS Key pair created and downloaded via AWS.
 awsSshKeyPair = "~/AWSparallel-test-keypair.pem"
@@ -174,7 +172,7 @@ this by creating an `AWSSnowParam` object
 
 FIXME: this code chunk should be written to be evaluated
 
-```{r, eval = FALSE}
+```{r, eval = TRUE}
 ## Load the package
 library(AWSParallel)
 
@@ -188,7 +186,7 @@ workers = 4
 ## If you already have a keypair, just set the path_to_key, to the pem file.
 path_to_key = "~/aws-parallel.pem"
 
-TODO: This can also be automated
+## TODO: This can also be automated
 awsSshKeyPair = aws.ec2::create_keypair("AWSParallelKeyPair", path_to_key)
 
 ## 
@@ -205,15 +203,16 @@ aws <- AWSSnowParam(
     awsSshKeyPair = path_to_key,
     awsCredentialsPath="/home/ubuntu/credentials"
     )
+
+aws
+## Check if instance is up,
+awsInstanceStatus(aws)
+
 ```
 
 Then perform diagnostics, start, use, and stop the cluster
 
 ```{r, eval = FALSE}
-aws
-## Check if instance is up,
-awsInstanceStatus(aws)
-
 ## Start instance
 bpstart(aws)
 
@@ -294,6 +293,26 @@ without being terminated. This *master* instance can be reused.
    well. The `.pem` file needs to have permissions to read only, i.e
    run `chmod 400 AWSparallel-test-keypair.pem` if you get a
    permissions error.
+   
+   
+# Instructions for Windows machines.
+
+For windows machines, we recommend that you manually follow the steps to 
+prepare a master instance instead of using the `awsLaunchMasterOnEc2` function.
+
+Once you prepare the master instance, and are able to establish an SSH 
+connection to the master you may use the rest of the package as described 
+without any difference because of the platform.
+
+
+# Advanced
+
+1. If you choose to keep your cluster isolated from any other work you have 
+going on your VPC. Please create a new VPC and use the subnets in that VPC
+to start your AWSParallel param.
+
+2. Give the AWSParallel param, the new subnet, and a security group as described
+in the security group section.
 
 # Session Info
 
