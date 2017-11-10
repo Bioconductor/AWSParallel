@@ -37,15 +37,13 @@ getAwsAmiId <-
         stop("Please create a VPC on your AWS account")
     }
     vpc
-    ## Using default VPC settings
-    ##    new_vpc <- create_vpc(cidr)
-    ##    new_vpc
 }
 
 
-
-#' importFrom aws.ec2 describe_instances
-.awsDetectSubnet <-
+#' Detect the subnet on the AWS master instance of the cluster
+#' 
+#' @importFrom aws.ec2 describe_instances
+.awsDetectSubnetOnMaster <-
     function()
 {
     ## Get list of all instances on AWS account
@@ -62,8 +60,6 @@ getAwsAmiId <-
                 subnet <- instancesSet[[j]][["subnetId"]]
         }
     }
-    if (is.na(subnet))
-        stop("You are not a recognized AWS EC2 instance")
     subnet
 }
 
@@ -78,11 +74,7 @@ getAwsAmiId <-
 .awsDetectOrCreateSubnet <-
     function(vpc)
 {
-    subnets <- describe_subnets()
-    subnet_vpc_id <- vapply(subnets, `[[`, character(1), "vpcId")
-
-    awsSubnet <- .awsDetectSubnet()
-
+    awsSubnet <- .awsDetectSubnetOnMaster()
     if (is.na(awsSubnet)) {
         ## If no subnet is available in that VPC,
         ## create one
@@ -127,14 +119,6 @@ getAwsAmiId <-
     sg
 }
 
-
-awsLaunchMasterOnEc2 <-
-    function()
-{
-    
-}
-
-
 #' Get AWS security requirements
 #'
 #' Security requirements to launch the EC2 instances into a VPC,
@@ -146,8 +130,46 @@ getAwsRequirements <-
 {
     ## If user passes in CIDR block, does it get passed in?
     vpc <- .awsDetectVpc()
-    subnet <- .awsDetectSubnet(vpc)
+    subnet <- .awsDetectOrCreateSubnet(vpc)
     sg <- .awsDetectSecurityGroup(vpc)
     ## Return a named list of vpc, subnet and security group
     list(vpc=vpc, subnet=subnet, sgroup=sg)
+}
+
+
+#' Function to detect if code is being run on EC2 master node
+.awsDetectMaster <-
+    function()
+{
+        ## Get list of all instances on AWS account
+    instances <- describe_instances()
+    ## Get hostname of local machine code is being run on
+    hostname <- system2("hostname", stdout=TRUE)
+    hostname <- gsub("-",".", sub("ip-","", hostname))
+    bool <- FALSE
+    for (i in seq_along(instances)) {
+        instancesSet = instances[[i]][["instancesSet"]]
+        for (j in seq_along(instancesSet)) {
+            privateIpAddress <- instancesSet[[j]][["privateIpAddress"]]
+            if (privateIpAddress == hostname) {
+                bool <- TRUE
+            }
+        }
+    }
+    bool
+}
+
+
+#' @importFrom aws.ec2 run_instances
+.awsLaunchMaster <-
+    function(x)
+{
+    reqs <- getAwsRequirements()
+    master_instance <- run_instances(image=awsAmiId(x),
+                                     type=awsInstanceType(x),
+                                     min=awsWorkers(x),
+                                     subnet=reqs$subnet,
+                                     sgroup=reqs$sgroup$groupId
+                                     )
+    master_instance
 }
