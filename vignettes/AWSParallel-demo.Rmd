@@ -18,7 +18,7 @@ of R and Bioconductor objects as `SnowParam`.
 
 The goal of the AWSParallel package is allow the user to create a
 cluster of EC2 machines on AWS, and run `bplapply` from one "master"
-node(EC2 machine) to send a task to "worker" machines. It is important
+node(EC2 machine) to send a task to a set of"worker" machines. It is important
 to note, that both master and worker nodes are on EC2. The user would
 have to start an instance, manually, and use this machine as master.
 
@@ -37,7 +37,8 @@ The quick start guide assumes you have your AWS access key, and secret
 key in `~/.aws/credentials`. Please refer to the detailed section of
 the vignette if these settings are not present.
 
-Load the [AWSParallel][] library and create an `AWSSnowParam`
+Load the **AWSParallel** library and create an `AWSSnowParam`
+
 
 ```{r, eval=TRUE}
 library(AWSParallel)
@@ -50,33 +51,56 @@ workers = 2
 ## http://bioconductor.org/help/bioconductor-cloud-ami/#ami_ids
 image <- "ami-a90c23cc"
 
-## A AWS Key pair created and downloaded via AWS.
-awsSshKeyPair = "~/AWSparallel-test-keypair.pem"
-
 ## Launch a small instance for demonstration `t2.micro`,
 ## larger instances cost more money.
-aws <- AWSSnowParam(
+cluster <- AWSSnowParam(
     workers=workers,
     awsInstanceType="t2.micro",
-    awsAmiId= image,
-    awsSshKeyPair = awsSshKeyPair
+    awsAmiId= image
 )
 ```
 
 Start, use, and stop a cluster.
 
-```{r, eval = FALSE}
+
+```{r awsDetectMaster}
+## This is a conditional param used to evaluate the vignette
+awsDetectMaster <- function()
+{
+        ## Get list of all instances on AWS account
+    instances <- aws.ec2::describe_instances()
+    ## Get hostname of local machine code is being run on
+    hostname <- system2("hostname", stdout=TRUE)
+    hostname <- gsub("-",".", sub("ip-","", hostname))
+    bool <- FALSE
+    for (i in seq_along(instances)) {
+        instancesSet = instances[[i]][["instancesSet"]]
+        for (j in seq_along(instancesSet)) {
+            privateIpAddress <- instancesSet[[j]][["privateIpAddress"]]
+            if (privateIpAddress == hostname) {
+                bool <- TRUE
+            }
+        }
+    }
+    bool
+}
+
+onMaster <- awsDetectMaster()
+```
+
+
+```{r conditional, eval = onMaster}
 ## Start instance
-bpstart(aws)
+bpstart(cluster)
 
 ## Start an AWSParam job-
 ## Notice that the hostnames are different. We can run a computation now, and 
 ## the job gets spread across the different machines, and collected back into
 ## the variable xx.
-xx <- bplapply(1:4, function(i) system("hostname", intern=TRUE), BPPARAM=aws)
+xx <- bplapply(1:4, function(i) system("hostname", intern=TRUE), BPPARAM=cluster)
 
 ## Stop aws instance(s)
-bpstop(aws) 
+bpstop(cluster) 
 ```
 
 # AWS settings
@@ -212,7 +236,7 @@ awsInstanceStatus(aws)
 
 Then perform diagnostics, start, use, and stop the cluster
 
-```{r, eval = FALSE}
+```{r, eval=onMaster}}
 ## Start instance
 bpstart(aws)
 
@@ -311,8 +335,12 @@ without any difference because of the platform.
 going on your VPC. Please create a new VPC and use the subnets in that VPC
 to start your AWSParallel param.
 
-2. Give the AWSParallel param, the new subnet, and a security group as described
+1. Give the AWSParallel param, the new subnet, and a security group as described
 in the security group section.
+
+1. If you want to get the verbose output of the SSH connections being
+   attempted to your worker nodes, please use the option
+   `verbose=TRUE` when making your AWSSnowParam object.
 
 # Session Info
 
