@@ -77,6 +77,10 @@
 #'     Bioconductor-release version
 #' @param awsSshKeyPair character, SSH key pair, to associate with
 #'     your AWS EC2-instance
+#' @param awsProfile character, indicates what profile to use while
+#'     using AWS credentials
+#' @param verbose logical, gives a verbose output of SSH
+#'     connection attempt, default is FALSE.
 #' @return AWSSnowParam object
 #' @examples
 #' \dontrun{
@@ -97,23 +101,29 @@ AWSSnowParam <- function(workers = 2,
              awsSecurityGroup = NA,
              awsAmiId = NA_character_,
              awsSshKeyPair = NA_character_,
+             awsProfile = "default",
              user="ubuntu",
              rhome="/usr/local/lib/R",
              ## TODO: change this default
              bplib="/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4/BiocParallel",
              rscript = "/usr/local/bin/Rscript",
-             outfile = "/home/ubuntu/snow.log"
+             outfile = "/home/ubuntu/snow.log",
+             verbose = FALSE
              )
 {
+
+    ## Validate AWS profile for IAM management
+    stopifnot(length(awsProfile) == 1L, is.character(awsProfile))
+
     ## Validate AWS Credentials Path
     if (is.na(awsCredentialsPath)) {
         if (.Platform$OS.type == "unix") {
             awsCredentialsPath = "~/.aws/credentials"
             ## Use credentials
-            use_credentials(awsCredentialsPath)
+            use_credentials(profile=awsProfile, file=awsCredentialsPath)
         } else {
-            ## FIXME: Windows %USERPROFILE%.awscredentials
-            message("TODO: Windows machine needs path for credentials")
+            ## if (.Platform$OS.type == "windows") {
+            message("Please launch EC2 master instance following the vignette")
         }
     }
     stopifnot(
@@ -134,6 +144,7 @@ AWSSnowParam <- function(workers = 2,
 
     ## If both security group and subnet are missing, assign
     if (missing(awsSubnet) || missing(awsSecurityGroup)) {
+        ## If on a master node
         reqs <- getAwsRequirements()
         ## Allocate subnet and securityGroup as need
         awsSubnet <- reqs$subnet
@@ -142,11 +153,12 @@ AWSSnowParam <- function(workers = 2,
 
     .clusterargs <- list(
         spec = workers, type = "SOCK",
-        ## TODO: Remove verbose argument -v
         ## Allow 'yes' to `Are you sure you want to continue connecting (yes/no)?`
         ## using ssh -oStrictHostKeyChecking=no
         ## ref: http://xmodulo.com/how-to-accept-ssh-host-keys-automatically-on-linux.html
-        rshcmd = paste("ssh -i", "-oStrictHostKeyChecking=no", awsSshKeyPair, "-v", sep=" "),
+        rshcmd = paste("ssh -oStrictHostKeyChecking=n -i", awsSshKeyPair,
+                       ifelse(verbose,yes="-v",no=""),
+                       sep=" "),
         user=user,
         rhome=rhome,
         snowlib=bplib,
@@ -324,6 +336,22 @@ awsCluster <- function()
         `[[`, character(1),
         "privateIpAddress"
     )
+}
+
+
+#' Launch master node on AWS EC2 if credentials are valid
+#'
+awsLaunchMasterOnEc2 <-
+    function(x)
+{
+    onMaster <- .awsDetectMaster()
+    if (onMaster) {
+        ## TODO: return instance details
+        message("You are on an EC2 instance now, you may choose,",
+                "to use this instance as your master node")
+    } else {
+        .awsLaunchMaster(x)
+    }
 }
 
 

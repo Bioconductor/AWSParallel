@@ -18,12 +18,13 @@ of R and Bioconductor objects as `SnowParam`.
 
 The goal of the AWSParallel package is allow the user to create a
 cluster of EC2 machines on AWS, and run `bplapply` from one "master"
-node(EC2 machine) to send a task to a set of"worker" machines. It is important
-to note, that both master and worker nodes are on EC2. The user would
-have to start an instance, manually, and use this machine as master.
+node (EC2 instance) to send a task to a set of "worker" nodes
+(multiple EC2 instances).  It is important to note, that both master
+and worker nodes are on EC2. The user would have to start an instance,
+manually, and use this machine as master.
 
 This package requires that the user have an Amazon AWS account that
-*costs money*, and requires a credit card to access. The AWS
+**costs money**, and requires a credit card to access. The AWS
 credentials provided by the user also need access, to other AWS
 services as well, namely,
 
@@ -56,7 +57,8 @@ image <- "ami-a90c23cc"
 cluster <- AWSSnowParam(
     workers=workers,
     awsInstanceType="t2.micro",
-    awsAmiId= image
+    awsAmiId= image,
+    awsProfile= "CloudCluster"
 )
 ```
 
@@ -111,7 +113,7 @@ Settings required to get the package working on AWS.
 
 To use AWSParallel, AWS credentials are a requirement. The credentials
 are given through [AWS Identity and Access management - IAM][]. The
-user needs an AWS access key and secret key.
+user needs an AWS access key and an AWS secret key.
 
 These AWS credntials should be stored on your machine accessible at
 `~/.aws/credentials`, as given in the documentation for
@@ -329,7 +331,7 @@ connection to the master you may use the rest of the package as described
 without any difference because of the platform.
 
 
-# Advanced
+# Advanced Tips
 
 1. If you choose to keep your cluster isolated from any other work you have 
 going on your VPC. Please create a new VPC and use the subnets in that VPC
@@ -341,6 +343,10 @@ in the security group section.
 1. If you want to get the verbose output of the SSH connections being
    attempted to your worker nodes, please use the option
    `verbose=TRUE` when making your AWSSnowParam object.
+
+1. It is important that this cluster configuration is used only to launch parallel
+jobs. If you launch a large job on the "master" node, there is no increment in speed.
+It is vital that large jobs are not launched on the master node.
 
 # Session Info
 

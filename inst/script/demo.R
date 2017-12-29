@@ -13,6 +13,7 @@ awsSshKeyPair = getOption("aws_ssh_key_pair")
 
 sg <- "sg-748dcd07"
 subnet <- "subnet-d66a05ec"
+
 ## Create AWS instance
 aws <- AWSSnowParam(
     workers=workers,
