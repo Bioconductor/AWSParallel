@@ -34,7 +34,6 @@
     methods = list(
         show = function() {
             callSuper()
-            ## Display only half of AWS access and secret keys
             cat("  awsCredentialsPath: ", awsCredentialsPath(.self),
                 "\n  awsInstanceType: ", awsInstanceType(.self),
                 "\n  awsSubnet: ", awsSubnet(.self),
