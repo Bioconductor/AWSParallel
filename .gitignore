@@ -5,3 +5,4 @@
 *.Rproj
 *.Rcheck
 inst/doc
+inst/extra_files

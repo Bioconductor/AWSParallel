@@ -200,7 +200,7 @@ bpsuspend <-
     function(clustername)
 {
     tryCatch({
-        cmd <- paste("starcluster", "stop" "--confirm", clustername)
+        cmd <- paste("starcluster", "stop", "--confirm", clustername)
         system2(cmd, stdout=TRUE)
     }, warning <- function(w) {
         "Warning in bpsuspend, stopping aws workers"
@@ -212,10 +212,10 @@ bpsuspend <-
 }
 
 bpteardown <-
-    function()
+    function(clustername)
 {
     tryCatch({
-        cmd <- paste("starcluster", "terminate" "--confirm", clustername)
+        cmd <- paste("starcluster", "terminate", "--confirm", clustername)
         system2(cmd, stdout=TRUE)
     }, warning <- function(w) {
         "Warning in bpteardown, terminating aws workers"
@@ -237,12 +237,10 @@ setMethod("bpstart", "AWSBatchJobsParam",
             call. = FALSE
         )
     }
-    
-        
 })
 
 setMethod("bpstop", "AWSBatchJobsParam",
     function(x)
 {
-        
+
 })
