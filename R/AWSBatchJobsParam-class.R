@@ -27,7 +27,8 @@
         awsCredentialsPath = "character",
         awsInstanceType = "character",
         awsSubnet = "character",
-        awsAmiId = "character",        awsSshKeyPair = "character"
+        awsAmiId = "character",
+        awsSshKeyPair = "character"
     ),
     methods = list(
         show = function() {
@@ -49,7 +50,6 @@ AWSBatchJobsParam <- function(workers = 2,
                               awsCredentialsPath = NA_character_,
                               awsInstanceType = NA_character_,
                               awsSubnet = NA,
-                              awsSecurityGroup = NA,
                               awsAmiId = NA_character_,
                               awsSshKeyPair = NA_character_,
                               awsProfile = "default",
@@ -67,7 +67,6 @@ AWSBatchJobsParam <- function(workers = 2,
             ## Use credentials
             use_credentials(profile=awsProfile, file=awsCredentialsPath)
         } else {
-            ## if (.Platform$OS.type == "windows") {
             message("Please launch EC2 master instance following the vignette")
         }
     }
@@ -87,8 +86,8 @@ AWSBatchJobsParam <- function(workers = 2,
     ## If both security group and subnet are missing, assign
     if (missing(awsSubnet)) {
         ## If on a master node
-        reqs <- getAwsRequirements()
-        ## Allocate subnet and securityGroup as need
+        reqs <- .awsDetectSubnetOnMaster()
+        ## Allocate subnet as need
         awsSubnet <- reqs$subnet
     }
 
@@ -104,7 +103,6 @@ AWSBatchJobsParam <- function(workers = 2,
     )
     validObject(x)
     x
-
 }
 
 #' Get AWS Instance type.
@@ -115,7 +113,7 @@ AWSBatchJobsParam <- function(workers = 2,
 #' type.  Large computations are best supported on this type of
 #' instance.
 #'
-#' @param AWSSnowParam object
+#' @param AWSBatchJobsParam object
 #'
 #' @return character
 #' @export
@@ -127,7 +125,7 @@ awsInstanceType <-
 
 #' Get path to AWS credentials
 #'
-#' @param AWSSnowParam object
+#' @param AWSBatchJobsParam object
 #'
 #' @export
 awsCredentialsPath <-
@@ -138,7 +136,7 @@ awsCredentialsPath <-
 
 #' Get number of workers in the cluster
 #'
-#' @param AWSSnowParam object
+#' @param AWSBatchJobsParam object
 #'
 #' @export
 awsWorkers <-
@@ -149,7 +147,7 @@ awsWorkers <-
 
 #' Get AWS AMI-ID of the launched instance
 #'
-#' @param AWSSnowParam
+#' @param AWSBatchJobsParam
 #'
 #' @export
 awsAmiId <-
@@ -160,7 +158,7 @@ awsAmiId <-
 
 #' Get AWS Subnet within which the AWS EC2 instance was launched
 #'
-#' @param AWSSnowParam
+#' @param AWSBatchJobsParam
 #'
 #' @export
 awsSubnet <-
@@ -171,7 +169,7 @@ awsSubnet <-
 
 #' Get the SSH public key path associted to the AWS EC2 instance.
 #'
-#' @param AWSSnowParam
+#' @param AWSBatchJobsParam
 #'
 #' @export
 awsSshKeyPair <-
@@ -180,8 +178,8 @@ awsSshKeyPair <-
     x$awsSshKeyPair
 }
 
-bpsetup <-
-    function(clustername)
+setMethod("bpsetup", "AWSBathcJobsParam",
+    function(x)
 {
     tryCatch({
         cmd <- paste("starcluster", "start", clustername)
@@ -193,14 +191,14 @@ bpsetup <-
     }, message <- function(m) {
         "AWS Cluster is being setup, please be patient"
     })
-}
+})
 
 ## FIXME: If cluster cannot be stopped
-bpsuspend <-
-    function(clustername)
+setMethod("bpsuspend", "AWSBatchJobsParam"),
+    function(x)
 {
     tryCatch({
-        cmd <- paste("starcluster", "stop", "--confirm", clustername)
+        cmd <- paste("starcluster", "stop", "--confirm", x)
         system2(cmd, stdout=TRUE)
     }, warning <- function(w) {
         "Warning in bpsuspend, stopping aws workers"
@@ -209,13 +207,13 @@ bpsuspend <-
     }, message <- function(m) {
         "AWS Cluster is being stopped, please be patient"
     })
-}
+})
 
-bpteardown <-
-    function(clustername)
+setMethod("bpteardown", "AWSBatchJobsParam",
+    function(x)
 {
     tryCatch({
-        cmd <- paste("starcluster", "terminate", "--confirm", clustername)
+        cmd <- paste("starcluster", "terminate", "--confirm", x)
         system2(cmd, stdout=TRUE)
     }, warning <- function(w) {
         "Warning in bpteardown, terminating aws workers"
@@ -224,7 +222,7 @@ bpteardown <-
     }, message <- function(m) {
         "AWS Cluster is being terminated, please be patient"
     })
-}
+})
 
 
 setMethod("bpstart", "AWSBatchJobsParam",

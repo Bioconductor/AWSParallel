@@ -1,5 +1,5 @@
 ---
-title: "AWSParallel Tutorial"
+title: "AWSParallel AWSSnowParam Tutorial"
 author: "Nitesh Turaga"
 date: "`r Sys.Date()`"
 output: BiocStyle::html_document
@@ -13,14 +13,14 @@ vignette: >
 
 The AWSParallel package provides functionality to perform parallel
 evaluation using AWS infrastructure, most importantly EC2. It extends
-the `SnowParam` class in BiocParallel, and works with the same range
+the `SnowParam` class in BiocParallel, and works with the same range 
 of R and Bioconductor objects as `SnowParam`.
 
 The goal of the AWSParallel package is allow the user to create a
 cluster of EC2 machines on AWS, and run `bplapply` from one "master"
 node (EC2 instance) to send a task to a set of "worker" nodes
 (multiple EC2 instances).  It is important to note, that both master
-and worker nodes are on EC2. The user would have to start an instance,
+and worker nodes are on EC2. The user will have to start an instance,
 manually, and use this machine as master.
 
 This package requires that the user have an Amazon AWS account that
@@ -52,13 +52,16 @@ workers = 2
 ## http://bioconductor.org/help/bioconductor-cloud-ami/#ami_ids
 image <- "ami-a90c23cc"
 
+## SSH key pair
+awsSshKeyPair = getOption("aws_ssh_key_pair")
+
 ## Launch a small instance for demonstration `t2.micro`,
 ## larger instances cost more money.
 cluster <- AWSSnowParam(
     workers=workers,
     awsInstanceType="t2.micro",
     awsAmiId= image,
-    awsProfile= "CloudCluster"
+    awsSshKeyPair = awsSshKeyPair
 )
 ```
 
@@ -347,6 +350,7 @@ in the security group section.
 1. It is important that this cluster configuration is used only to launch parallel
 jobs. If you launch a large job on the "master" node, there is no increment in speed.
 It is vital that large jobs are not launched on the master node.
+
 
 # Session Info
 

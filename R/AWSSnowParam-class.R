@@ -53,7 +53,7 @@
 #'
 #' This function starts a cluster of AWS EC2-instances to allow
 #' parallel computation of R objects, and works with BiocParallel, to
-#' allow computation with Bioconductor objects
+#' allow computation with R/Bioconductor objects
 #'
 #' @param workers Numeric, number of workers to launch in the cluster
 #' @param awsCredentialsPath character, Path to AWS credentials,
