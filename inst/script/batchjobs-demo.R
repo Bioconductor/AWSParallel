@@ -64,12 +64,19 @@ awsSshKeyPair = "mykey"
 
 
 ## Construct AWSBatchJobsParam class
-AWSBatchJobsParam(workers,
+aws <- AWSBatchJobsParam(workers,
                   awsCredentialsPath,
                   awsInstanceType,
                   awsSubnet,
                   awsAmiId,
                   awsSshKeyPair)
+
+bpsetup(aws)
+
+bpsuspend(aws)
+
+bpteardown(aws)
+
 
 
 .config_starcluster(workers=2,

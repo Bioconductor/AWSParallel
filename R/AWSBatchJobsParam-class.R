@@ -87,16 +87,17 @@
 #' @importFrom aws.signature use_credentials
 #' @exportClass AWSBatchJobsParam
 #' @export
-AWSBatchJobsParam <- function(workers = 2,
-                              awsCredentialsPath = NA_character_,
-                              awsInstanceType = NA_character_,
-                              awsSubnet = NA_character_,
-                              awsAmiId = NA_character_,
-                              awsSshKeyPair = NA_character_,
-                              awsProfile = "default",
-                              user="ubuntu",
-                              verbose = FALSE
-                            )
+AWSBatchJobsParam <-
+    function(workers = 2,
+             awsCredentialsPath = NA_character_,
+             awsInstanceType = NA_character_,
+             awsSubnet = NA_character_,
+             awsAmiId = NA_character_,
+             awsSshKeyPair = NA_character_,
+             awsProfile = "default",
+             user="ubuntu",
+             verbose = FALSE
+             )
 {
     # Check AWS profile
     stopifnot(length(awsProfile) == 1L, is.character(awsProfile))
