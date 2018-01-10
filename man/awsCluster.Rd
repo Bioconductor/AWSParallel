@@ -2,8 +2,8 @@
 % Please edit documentation in R/AWSSnowParam-class.R
 \name{awsCluster}
 \alias{awsCluster}
-\title{Get the AWSSnowParam object currently launched. Only one AWSSnowParam object can be
-started within one session.}
+\title{Get the AWSSnowParam object currently launched. Only one
+AWSSnowParam object can be started within one session.}
 \usage{
 awsCluster()
 }
@@ -11,6 +11,6 @@ awsCluster()
 AWSSnowParam object
 }
 \description{
-Get the AWSSnowParam object currently launched. Only one AWSSnowParam object can be
-started within one session.
+Get the AWSSnowParam object currently launched. Only one
+AWSSnowParam object can be started within one session.
 }

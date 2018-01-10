@@ -20,13 +20,16 @@
 #' @field awsSshKeyPair SSH key pair, to associate with your AWS
 #'     EC2-instance
 #' @importFrom methods new validObject callNextMethod
-#' @importClassesFrom BiocParallel SnowParam BiocParallelParam
-.AWSBatchJobsParam <- setRefClass( "AWSBatchJobsParam",
+#' @importClassesFrom BiocParallel BatchJobsParam BiocParallelParam
+.AWSBatchJobsParam <- setRefClass(
+    "AWSBatchJobsParam",
     contains = "BatchJobsParam",
     fields = list(
         awsCredentialsPath = "character",
         awsInstanceType = "character",
         awsSubnet = "character",
+        ##        awsSecurityGroup = "character",
+        ##        awsInstance = "list,
         awsAmiId = "character",
         awsSshKeyPair = "character"
     ),
@@ -46,10 +49,48 @@
 )
 
 
+#' AWSBatchJobsParam function to start an AWS EC2-instance cluster
+#'
+#' This function starts a cluster of AWS EC2-instances to allow
+#' parallel computation of R objects using BatchJobs on SGE, and works
+#' with BiocParallel, to allow computation with R/Bioconductor objects.
+#'
+#' @param workers Numeric, number of workers to launch in the cluster
+#' @param awsCredentialsPath character, Path to AWS credentials,
+#'     default value is `~/.aws/credentials`
+#' @param awsInstanceType character, Type of AWS EC2-instance,
+#'     eg. t2.micro
+#' @param awsSubnet character, AWS EC2-instance subnet, within a
+#'     certain VPC
+#' @param awsAmiId character, AMI(amazon machine image) ID for the
+#'     Bioconductor-release version
+#' @param awsSshKeyPair character, SSH key pair, to associate with
+#'     your AWS EC2-instance
+#' @param awsProfile character, indicates what profile to use while
+#'     using AWS credentials
+#' @param verbose logical, gives a verbose output of SSH
+#'     connection attempt, default is FALSE.
+#' @return AWSSnowParam object
+#' @examples
+#' \dontrun{
+#'         ## Minimal example
+#'         aws <- AWSBatchJobsParam(
+#'                    workers = 2
+#'                    awsCredentialsPath = "~/.aws/credentials"
+#'                    awsInstanceType = "t2.micro"
+#'                    awsSubnet = "subnet-d66a05ec"
+#'                    awsAmiId = "ami-0454187e"
+#'                    awsSshKeyPair = "mykey"
+#'                )
+#' }
+#' @importFrom aws.ec2 my_ip
+#' @importFrom aws.signature use_credentials
+#' @exportClass AWSBatchJobsParam
+#' @export
 AWSBatchJobsParam <- function(workers = 2,
                               awsCredentialsPath = NA_character_,
                               awsInstanceType = NA_character_,
-                              awsSubnet = NA,
+                              awsSubnet = NA_character_,
                               awsAmiId = NA_character_,
                               awsSshKeyPair = NA_character_,
                               awsProfile = "default",
@@ -80,18 +121,16 @@ AWSBatchJobsParam <- function(workers = 2,
     ## If missing, default to release version of AMI
     ## FIXME: this AMI ID needs to be for starcluster AMI
     if (missing(awsAmiId)) {
-        awsAmiId <- getStarclusterAwsAmiId()
+        awsAmiId <- getStarclusterAmiId()
     }
 
-    ## If both security group and subnet are missing, assign
+    ## If subnet is missing, assign
     if (missing(awsSubnet)) {
         ## If on a master node
-        reqs <- .awsDetectSubnetOnMaster()
-        ## Allocate subnet as need
-        awsSubnet <- reqs$subnet
+        awsSubnet <- .awsDetectSubnetOnMaster()
     }
 
-    ## Initiate .AWSSnowParam class
+    ## Initiate .AWSBatchJobsParam class
     x <- .AWSBatchJobsParam(
         workers = workers,
         ## AWSBatchJobsParam fields
@@ -130,9 +169,9 @@ awsInstanceType <-
 #' @export
 awsCredentialsPath <-
     function(x)
-    {
+ {
         x$awsCredentialsPath
-    }
+ }
 
 #' Get number of workers in the cluster
 #'
@@ -178,57 +217,59 @@ awsSshKeyPair <-
     x$awsSshKeyPair
 }
 
-setMethod("bpsetup", "AWSBathcJobsParam",
-    function(x)
+#' Setup cluster where x is clustername
+#' @export
+bpsetup <-
+    function(clustername="awsparallel")
 {
-    tryCatch({
-        cmd <- paste("starcluster", "start", clustername)
-        system2(cmd, stdout=TRUE)
-    }, warning <- function(w) {
-        "Warning in bpsetup, starting aws master and workers"
-    }, error <- function(e) {
-        "Error starting cluster"
-    }, message <- function(m) {
-        "AWS Cluster is being setup, please be patient"
-    })
-})
+    cmd <- paste("starcluster", "start", clustername)
+    res <- system2(cmd)
+    ## FIXME: Check if error code is 0/1
+    if (res == 0) {
+        stop("Cluster failed to launch, please check the settings")
+    }
+}
+
 
 ## FIXME: If cluster cannot be stopped
-setMethod("bpsuspend", "AWSBatchJobsParam"),
-    function(x)
+#' @export
+bpsuspend <-
+    function(clustername="awsparallel")
 {
-    tryCatch({
-        cmd <- paste("starcluster", "stop", "--confirm", x)
-        system2(cmd, stdout=TRUE)
-    }, warning <- function(w) {
-        "Warning in bpsuspend, stopping aws workers"
-    }, error <- function(e) {
-        "Error suspending cluster"
-    }, message <- function(m) {
-        "AWS Cluster is being stopped, please be patient"
-    })
-})
+    cmd <- paste("starcluster", "stop", "--confirm", clustername)
+    res <- system2(cmd, stdout=TRUE)
+    ## FIXME: Check if error code is 0/1
+    if (res == 0) {
+        stop("Error suspending cluster. Please check your AWS",
+             "account for these instances.")
+    }
+}
 
-setMethod("bpteardown", "AWSBatchJobsParam",
-    function(x)
+
+#' x is clustername
+#' @export
+bpteardown <-
+    function(clustername="awsparallel")
 {
-    tryCatch({
-        cmd <- paste("starcluster", "terminate", "--confirm", x)
-        system2(cmd, stdout=TRUE)
-    }, warning <- function(w) {
-        "Warning in bpteardown, terminating aws workers"
-    }, error <- function(e) {
-        "Error terminated cluster"
-    }, message <- function(m) {
-        "AWS Cluster is being terminated, please be patient"
-    })
-})
+    cmd <- paste("starcluster", "terminate", "--confirm", clustername)
+    res <- system2(cmd, stdout=TRUE)
+    if (res ==0) {
+        stop("Error terminating cluster. Please check your AWS",
+             "account for these instances or run bpteardown again.")
+    }
+}
 
-
+## TODO: Provide information for the config file to be SSH-ed into the master.
+## 1. Save config file.
+## 2. re-construct the AWSBatchJobsParam on the master from the config file.
+## 3. Look at register.R from BiocParallel to see how to register latest
+##    AWSBatchJobs param.
+#'
+#' @exportMethod
 setMethod("bpstart", "AWSBatchJobsParam",
     function(x)
 {
-    if(.awsDetectOnMaster()) {
+    if(.awsDetectMaster()) {
         stop(
             "SSH to Master node of batch jobs machine using",
             "awsConnectToMaster()",
@@ -237,8 +278,10 @@ setMethod("bpstart", "AWSBatchJobsParam",
     }
 })
 
+#' TODO
+#' @exportMethod
 setMethod("bpstop", "AWSBatchJobsParam",
     function(x)
 {
-
+    cat("bpstop is being called")
 })

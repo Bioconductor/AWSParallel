@@ -10,6 +10,6 @@ getAwsRequirements()
 list, containing VPC, subnet, security group information
 }
 \description{
-Security requirements to launch the EC2 instances into
-a VPC, subnet, and security group
+Security requirements to launch the EC2 instances into a VPC,
+subnet, and security group
 }

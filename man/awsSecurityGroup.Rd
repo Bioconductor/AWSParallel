@@ -2,8 +2,8 @@
 % Please edit documentation in R/AWSSnowParam-class.R
 \name{awsSecurityGroup}
 \alias{awsSecurityGroup}
-\title{Get AWS Security group for the EC2 instance, which defines inbound and
-outbound traffic.}
+\title{Get AWS Security group for the EC2 instance, which defines inbound
+and outbound traffic.}
 \usage{
 awsSecurityGroup(x)
 }
@@ -11,6 +11,6 @@ awsSecurityGroup(x)
 \item{AWSSnowParam}{}
 }
 \description{
-Get AWS Security group for the EC2 instance, which defines inbound and
-outbound traffic.
+Get AWS Security group for the EC2 instance, which defines inbound
+and outbound traffic.
 }
