@@ -217,11 +217,33 @@ awsSshKeyPair <-
     x$awsSshKeyPair
 }
 
+#' Get the AWS profile being used for the credentials
+#'
+#' @param AWSBatchJobsParam
+#'
+#' @export
+awsProfile <-
+    function(x)
+{
+    x$awsProfile
+}
+
 #' Setup cluster where x is clustername
 #' @export
 bpsetup <-
-    function(clustername="awsparallel")
+    function(x, clustername="awsparallel")
 {
+
+    .config_starcluster(workers = awsWorkers(x),
+                        awsCredentialsPath = awsCredentialsPath(x),
+                        awsInstanceType = awsInstanceType(x),
+                        awsSubnet = awsSubnet(x),
+                        awsAmiId = awsAmiId(x),
+                        awsSshKeyPair = awsSshKeyPair(x),
+                        awsProfile = awsProfile(x),
+                        user = "ubuntu",
+                        cidr_ip = "172.30.0.0/16"
+                        )
     cmd <- paste("starcluster", "start", clustername)
     res <- system2(cmd)
     ## FIXME: Check if error code is 0/1
@@ -234,7 +256,7 @@ bpsetup <-
 ## FIXME: If cluster cannot be stopped
 #' @export
 bpsuspend <-
-    function(clustername="awsparallel")
+    function(x, clustername="awsparallel")
 {
     cmd <- paste("starcluster", "stop", "--confirm", clustername)
     res <- system2(cmd, stdout=TRUE)
@@ -249,7 +271,7 @@ bpsuspend <-
 #' x is clustername
 #' @export
 bpteardown <-
-    function(clustername="awsparallel")
+    function(x, clustername="awsparallel")
 {
     cmd <- paste("starcluster", "terminate", "--confirm", clustername)
     res <- system2(cmd, stdout=TRUE)

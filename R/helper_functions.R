@@ -212,7 +212,8 @@ getAwsRequirements <-
 
         ## Write CIDR block
         config[["permission http"]][["CIDR_IP"]] <- cidr_ip
-        ## FIXME: Write ini new config file
+
+        ## Write config file in the correct path.
         write.ini(config, "~/.starcluster/config")
     }
 
