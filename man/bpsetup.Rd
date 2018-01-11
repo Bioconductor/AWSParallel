@@ -4,7 +4,7 @@
 \alias{bpsetup}
 \title{Setup cluster where x is clustername}
 \usage{
-bpsetup(clustername)
+bpsetup(x, clustername = "awsparallel", awsProfile = "default")
 }
 \description{
 Setup cluster where x is clustername

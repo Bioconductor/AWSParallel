@@ -31,7 +31,8 @@
         ##        awsSecurityGroup = "character",
         ##        awsInstance = "list,
         awsAmiId = "character",
-        awsSshKeyPair = "character"
+        awsSshKeyPair = "character",
+        awsProfile = "character"
     ),
     methods = list(
         show = function() {
@@ -41,6 +42,7 @@
                 "\n awsSubnet: ", awsSubnet(.self),
                 "\n awsAmiId: ", awsAmiId(.self),
                 "\n awsSshKeyPair: ", awsSshKeyPair(.self),
+                "\n awsProfile: ", awsProfile(.self),
                 "\n",
                 sep="")
         }
@@ -218,21 +220,11 @@ awsSshKeyPair <-
     x$awsSshKeyPair
 }
 
-#' Get the AWS profile being used for the credentials
-#'
-#' @param AWSBatchJobsParam
-#'
-#' @export
-awsProfile <-
-    function(x)
-{
-    x$awsProfile
-}
 
 #' Setup cluster where x is clustername
 #' @export
 bpsetup <-
-    function(x, clustername="awsparallel")
+    function(x, clustername="awsparallel", awsProfile="default")
 {
 
     .config_starcluster(workers = awsWorkers(x),
@@ -241,42 +233,41 @@ bpsetup <-
                         awsSubnet = awsSubnet(x),
                         awsAmiId = awsAmiId(x),
                         awsSshKeyPair = awsSshKeyPair(x),
-                        awsProfile = awsProfile(x),
+                        awsProfile = awsProfile,
                         user = "ubuntu",
                         cidr_ip = "172.30.0.0/16"
                         )
-    cmd <- paste("starcluster", "start", clustername)
-    res <- system2(cmd)
-    ## FIXME: Check if error code is 0/1
-    if (res == 0) {
+    args <- c("start", clustername)
+    res <- system2("starcluster", args=args)
+
+    if (res == 1) {
         stop("Cluster failed to launch, please check the settings")
     }
 }
 
 
-## FIXME: If cluster cannot be stopped
 #' @export
 bpsuspend <-
     function(x, clustername="awsparallel")
 {
-    cmd <- paste("starcluster", "stop", "--confirm", clustername)
-    res <- system2(cmd, stdout=TRUE)
-    ## FIXME: Check if error code is 0/1
-    if (res == 0) {
+    args <- c("stop", "--confirm", clustername)
+    res <- system2("starcluster", args=args)
+    ## Throw error if unsuccessful
+    if (res == 1) {
         stop("Error suspending cluster. Please check your AWS",
              "account for these instances.")
     }
 }
 
 
-#' x is clustername
+#' 
 #' @export
 bpteardown <-
     function(x, clustername="awsparallel")
 {
-    cmd <- paste("starcluster", "terminate", "--confirm", clustername)
-    res <- system2(cmd, stdout=TRUE)
-    if (res ==0) {
+    args <- c("terminate", "-f", "--confirm", clustername)
+    res <- system2("starcluster", args=args)
+    if (res == 1) {
         stop("Error terminating cluster. Please check your AWS",
              "account for these instances or run bpteardown again.")
     }

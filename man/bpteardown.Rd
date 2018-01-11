@@ -4,7 +4,7 @@
 \alias{bpteardown}
 \title{x is clustername}
 \usage{
-bpteardown(clustername)
+bpteardown(x, clustername = "awsparallel")
 }
 \description{
 x is clustername

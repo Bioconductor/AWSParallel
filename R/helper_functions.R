@@ -177,6 +177,7 @@ getAwsRequirements <-
 
 #' Configure starcluster with the
 #' @importFrom ini read.ini
+#' @importFrom ini write.ini
 .config_starcluster <-
     function(workers,
              awsCredentialsPath="~/.aws/credentials",
@@ -187,50 +188,60 @@ getAwsRequirements <-
              awsProfile="default",
              user="ubuntu",
              cidr_ip=NA_character_
-    )
-    {
-        starcluster_config <- system.file("extdata",
-                                          "config.ini",
-                                          package = "AWSParallel")
-        ## Read starcluster config
-        config <- read.ini(starcluster_config)
-
-        ## Fill starcluster config, Process AWS credentials
-        aws_credentials <- read.ini(awsCredentialsPath)
-        config[["aws info"]][["AWS_ACCESS_KEY_ID"]] <-
-            aws_credentials[[awsProfile]][["aws_access_key_id"]]
-        config[["aws info"]][["AWS_SECRET_ACCESS_KEY"]] <-
-            aws_credentials[[awsProfile]][["aws_secret_access_key"]]
-
-        ## Process AWS instance configuration
-        config[["cluster smallcluster"]][["SUBNET_IDS"]] <- awsSubnet
-        config[["cluster smallcluster"]][["CLUSTER_SIZE"]] <- workers
-        config[["cluster smallcluster"]][["CLUSTER_USER"]] <- user
-        config[["cluster smallcluster"]][["KEYNAME"]] <- awsSshKeyPair
-        config[["cluster smallcluster"]][["NODE_INSTANCE_TYPE"]] <- awsInstanceType
-        config[["cluster smallcluster"]][["NODE_IMAGE_ID"]] <- awsAmiId
-
-        ## Write CIDR block
-        config[["permission http"]][["CIDR_IP"]] <- cidr_ip
-
-        ## Write config file in the correct path.
-        write.ini(config, "~/.starcluster/config")
-    }
+             )
+{
+    starcluster_config <- system.file("extdata",
+                                      "config.ini",
+                                      package = "AWSParallel")
+    ## Read starcluster config
+    config <- read.ini(starcluster_config)
+    
+    ## Fill starcluster config, Process AWS credentials
+    aws_credentials <- read.ini(awsCredentialsPath)
+    config[["aws info"]][["AWS_ACCESS_KEY_ID"]] <-
+        aws_credentials[[awsProfile]][["aws_access_key_id"]]
+    config[["aws info"]][["AWS_SECRET_ACCESS_KEY"]] <-
+        aws_credentials[[awsProfile]][["aws_secret_access_key"]]
+    
+    ## Process AWS instance configuration
+    config[["cluster smallcluster"]][["SUBNET_IDS"]] <- awsSubnet
+    config[["cluster smallcluster"]][["CLUSTER_SIZE"]] <- workers
+    config[["cluster smallcluster"]][["CLUSTER_USER"]] <- user
+    config[["cluster smallcluster"]][["KEYNAME"]] <- awsSshKeyPair
+    config[["cluster smallcluster"]][["NODE_INSTANCE_TYPE"]] <- awsInstanceType
+    config[["cluster smallcluster"]][["NODE_IMAGE_ID"]] <- awsAmiId
+    
+    ## Write CIDR block
+    config[["permission http"]][["CIDR_IP"]] <- cidr_ip
+    
+    ## Write config file in the correct path.
+    write.ini(config, "~/.starcluster/config")
+}
 
 ## FIXME: AMI should be listed on bioconductor.org/config.yaml
 #' This function returns the AMI ID listed on bioconductor
 #' https://www.bioconductor.org/config.yaml
 getStarclusterAmiId <-
     function()
-    {
-        "ami-0454187e"
-    }
+{
+    "ami-0454187e"
+}
 
+
+.transferStarclusterConfig <-
+    function()
+{
+    cat("Transfer config file")
+}
+
+
+#' Print command on exit from R session on host machine
 .Last <-
     function()
-    {
-        message("Please use this command to ssh to your master node",
-                " on your AWS Cluster",
-                "",
-                " 'starcluster sshmaster -u ubuntu awsparallel' ")
-    }
+{
+    message("Please use this command to ssh to your master node",
+            " on your AWS Cluster",
+            "",
+            " 'starcluster sshmaster -u ubuntu awsparallel' ")
+}
+
