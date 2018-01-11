@@ -1,40 +1,64 @@
 # ###########################################
 # ## Trial 1: with Security Group and Subnet
 # ###########################################
-# library(AWSParallel)
-#
-# ## Bioc-devel with starcluster
-# image <-  "ami-0454187e"
-#
-# ## Include Number of workers as 2
-# workers = 2
-# ## workers = 4
+library(AWSParallel)
+
+## Set required arguments
+
+
+## Include Number of workers as 2
+workers = 2
+
+credentialsPath = "~/.aws/credentials"
+
+instanceType = "t2.micro"
+
+subnet <- "subnet-d66a05ec"
+
+## Bioc-devel with starcluster
+image <- "ami-0454187e"
+
+keyPair <- "mykey"
+
+
+## Construct AWSBatchJobsParam class
+aws <- AWSBatchJobsParam(workers = workers,
+                  awsCredentialsPath = credentialsPath,
+                  awsInstanceType = instanceType,
+                  awsSubnet = subnet,
+                  awsAmiId = image,
+                  awsSshKeyPair = keyPair,
+                  awsProfile="CloudCluster")
+
+aws
+
+bpsetup(aws)
+
+bpsuspend(aws)
+
+bpteardown(aws)
+
+
+
+## Test .config_starcluster
+## .config_starcluster(workers=2,
+##                     awsCredentialsPath = "~/.aws/credentials",
+##                     awsInstanceType = awsInstanceType,
+##                     awsSubnet = awsSubnet,
+##                     awsAmiId = awsAmiId,
+##                     awsSshKeyPair = awsSshKeyPair,
+##                     awsProfile = awsProfile,
+##                     user = "ubuntu",
+##                     cidr_ip = "172.30.0.0/16"
+##                     )
+
+
 #
 # ## Set the AWS SSH key pair for your machine
 # awsSshKeyPair = getOption("aws_ssh_key_pair")
 #
-# ## Define subnet
-# subnet <- "subnet-d66a05ec"
-#
-# ## Create AWS instance
-# aws <- AWSBatchJobsParam(
-#     workers=workers,
-#     awsInstanceType="t2.micro",
-#     awsSubnet = subnet,
-#     awsAmiId= image,
-#     awsSshKeyPair = awsSshKeyPair,
-#     awsCredentialsPath="/home/ubuntu/credentials"
-# )
-#
-# aws
-#
-# ## Setup master and worker nodes with starcluster
-# bpsetup(aws)
-#
-# ## Start instance --> or log into master via SSH
+
 # bpstart(aws)
-#
-#
 #
 #
 # ## Return cluster which was started
@@ -48,44 +72,4 @@
 #
 # ## Stop aws instance
 # bpstop(aws)
-#
-#
 
-## Load library
-library(AWSParallel)
-
-## Set required arguments
-workers = 2
-awsCredentialsPath = "~/.aws/credentials"
-awsInstanceType = "t2.micro"
-awsSubnet = "subnet-d66a05ec"
-awsAmiId = "ami-0454187e"
-awsSshKeyPair = "mykey"
-
-
-## Construct AWSBatchJobsParam class
-aws <- AWSBatchJobsParam(workers,
-                  awsCredentialsPath,
-                  awsInstanceType,
-                  awsSubnet,
-                  awsAmiId,
-                  awsSshKeyPair)
-
-bpsetup(aws)
-
-bpsuspend(aws)
-
-bpteardown(aws)
-
-
-
-.config_starcluster(workers=2,
-                    awsCredentialsPath = "~/.aws/credentials",
-                    awsInstanceType = awsInstanceType,
-                    awsSubnet = awsSubnet,
-                    awsAmiId = awsAmiId,
-                    awsSshKeyPair = awsSshKeyPair,
-                    awsProfile = awsProfile,
-                    user = "ubuntu",
-                    cidr_ip = "172.30.0.0/16"
-                    )

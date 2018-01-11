@@ -4,7 +4,8 @@
 \name{awsAmiId}
 \alias{awsAmiId}
 \alias{awsAmiId}
-\title{Get AWS AMI-ID of the launched instance}
+\title{Get AWS AMI-ID of the launched instance. These need to be
+Bioconductor configured AMI's.}
 \usage{
 awsAmiId(x)
 
@@ -16,7 +17,8 @@ awsAmiId(x)
 \item{AWSSnowParam}{}
 }
 \description{
-Get AWS AMI-ID of the launched instance
+Get AWS AMI-ID of the launched instance. These need to be
+Bioconductor configured AMI's.
 
 Get AWS AMI-ID of the launched instance
 }

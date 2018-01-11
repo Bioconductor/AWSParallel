@@ -1,10 +1,10 @@
 #' Reference class .AWSBatchJobsParam allows use AWS EC2 as Clusters
 #'
 #' The .AWSBatchJobsParam class extends the BatchJobsParam class to allow
-#' usage of AWS EC2-instances for parallel computation.
-#' The methods follow a style similar to that of BiocParallelParams,
-#' with bpstart, bpstop, bpisup, bplapply being the important one.
-#' The behaviour of these functions is described in the man pages.
+#' usage of AWS EC2-instances for parallel computation. The methods follow a
+#' style similar to that of BiocParallelParams, with bpstart, bpstop, bpisup,
+#' bplapply being the important one. The behaviour of these functions is
+#' described in the man pages.
 #'
 #' @field awsCredentialsPath Path to AWS credentials, default value is
 #'     `~/.aws/credentials`
@@ -239,7 +239,7 @@ awsProfile <-
 #' or start a new or existing cluster on the user's AWS account. Once
 #' a cluster is up an running, it should be safely suspended or terminated
 #' using functionality like 'bpsuspend' and 'bpteardown'.
-#' 
+#'
 #' @param x AWSBatchJobsParam object
 #' @param clustername character value given to the cluster.
 #' @export
@@ -267,11 +267,11 @@ bpsetup <-
 
 #' Suspend an AWS EC2 cluster started using bpsetup
 #'
-#' bpsuspend is required to 'stop' an AWS Cluster, if the user 
+#' bpsuspend is required to 'stop' an AWS Cluster, if the user
 #' has an intention of re-using it at a later time. It does NOT
 #' terminate the cluster. The clustername should match the argument
 #' used in bpstart.
-#' 
+#'
 #' @param x AWSBatchJobsParam object
 #' @param clustername character value given to the cluster.
 #' @export
@@ -291,9 +291,9 @@ bpsuspend <-
 #' Teardown permanently (TERMINATE) the AWS cluster.
 #'
 #' bpteardown is used to completely remove the AWS cluster from
-#' the users AWS account. The user cannot retreive any data or 
+#' the users AWS account. The user cannot retreive any data or
 #' reuse the cluster once bpteardown is started.
-#' 
+#'
 #' We recommend using bpteardown, once the data analysis is done.
 #' This will regulate AWS account costs, unless the user intends to
 #' to reuse the cluster. If there is a need to reuse the cluster see,
@@ -319,7 +319,6 @@ bpteardown <-
 ## 3. Look at register.R from BiocParallel to see how to register latest
 ##    AWSBatchJobs param.
 #'
-#' @exportMethod
 setMethod("bpstart", "AWSBatchJobsParam",
     function(x)
 {
@@ -332,8 +331,7 @@ setMethod("bpstart", "AWSBatchJobsParam",
     }
 })
 
-#' TODO
-#' @exportMethod
+
 setMethod("bpstop", "AWSBatchJobsParam",
     function(x)
 {

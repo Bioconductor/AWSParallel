@@ -195,14 +195,14 @@ getAwsRequirements <-
                                       package = "AWSParallel")
     ## Read starcluster config
     config <- read.ini(starcluster_config)
-    
+
     ## Fill starcluster config, Process AWS credentials
     aws_credentials <- read.ini(awsCredentialsPath)
     config[["aws info"]][["AWS_ACCESS_KEY_ID"]] <-
         aws_credentials[[awsProfile]][["aws_access_key_id"]]
     config[["aws info"]][["AWS_SECRET_ACCESS_KEY"]] <-
         aws_credentials[[awsProfile]][["aws_secret_access_key"]]
-    
+
     ## Process AWS instance configuration
     config[["cluster smallcluster"]][["SUBNET_IDS"]] <- awsSubnet
     config[["cluster smallcluster"]][["CLUSTER_SIZE"]] <- workers
@@ -210,10 +210,10 @@ getAwsRequirements <-
     config[["cluster smallcluster"]][["KEYNAME"]] <- awsSshKeyPair
     config[["cluster smallcluster"]][["NODE_INSTANCE_TYPE"]] <- awsInstanceType
     config[["cluster smallcluster"]][["NODE_IMAGE_ID"]] <- awsAmiId
-    
+
     ## Write CIDR block
     config[["permission http"]][["CIDR_IP"]] <- cidr_ip
-    
+
     ## Write config file in the correct path.
     write.ini(config, "~/.starcluster/config")
 }
@@ -227,21 +227,36 @@ getStarclusterAmiId <-
     "ami-0454187e"
 }
 
-
+#' Allows transfer of files from Host machine, to master node on cluster.
+#'
+#' Follows this command
+#'     #  starcluster put mycluster --node mycluster-master
+#'     #                            --user myuser /local/path /remote/path
+#'
+#' @param clustername character vector of the clustername
+#' @param starcluster_config character vector of path to starcluster config
 .transferStarclusterConfig <-
-    function()
+    function(clustername, starcluster_config = "~/.starcluster/config")
 {
-    cat("Transfer config file")
+    args <- c("put", clustername,
+              "--node", paste0(clustername,"-master"),
+              "--user", "ubuntu",
+              starcluster_config,
+              starcluster_config)
+    system2("starcluster", args = args)
 }
 
-
-#' Print command on exit from R session on host machine
-.Last <-
+#' Function to return the names of Clusters launched.
+.awsParallelListClusters <-
     function()
-{
-    message("Please use this command to ssh to your master node",
-            " on your AWS Cluster",
-            "",
-            " 'starcluster sshmaster -u ubuntu awsparallel' ")
-}
+    {
+        args <- c("listclusters")
+        res <- system2("starcluster", args = args, stdout=TRUE)
+        clusterTagIdx <- length(grep("-------", res))/2
+        skipper <- seq(1, length(clusterTagIdx), by=2)
+        clusterNameIdx <- colMeans(rbind(xx[skipper], xx[skipper+1]))
+        ## Return Name of clusters in Starcluster
+        res[clusterNameIdx]
+    }
+
 

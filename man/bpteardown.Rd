@@ -2,10 +2,23 @@
 % Please edit documentation in R/AWSBatchJobsParam-class.R
 \name{bpteardown}
 \alias{bpteardown}
-\title{x is clustername}
+\title{Teardown permanently (TERMINATE) the AWS cluster.}
 \usage{
 bpteardown(x, clustername = "awsparallel")
 }
+\arguments{
+\item{x}{AWSBatchJobsParam object}
+
+\item{clustername}{character value given to the cluster.}
+}
 \description{
-x is clustername
+bpteardown is used to completely remove the AWS cluster from
+the users AWS account. The user cannot retreive any data or
+reuse the cluster once bpteardown is started.
+}
+\details{
+We recommend using bpteardown, once the data analysis is done.
+This will regulate AWS account costs, unless the user intends to
+to reuse the cluster. If there is a need to reuse the cluster see,
+'?bpsuspend'.
 }

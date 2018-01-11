@@ -4,14 +4,16 @@
 \name{AWSBatchJobsParam-class}
 \alias{AWSBatchJobsParam-class}
 \alias{.AWSBatchJobsParam}
-\title{Reference class .AWSBatchJobsParam that allows usage of AWS EC2
--instances through starcluster}
+\title{.AWSBatchJobsParam refClass}
 \description{
-The .AWSBatchJobs class extends the BatchJobsParam class to allow
-usage of AWS EC2-instances for parallel computation.
-The methods follow a style similar to that of BiocParallelParams,
-with bpstart, bpstop, bpisup, bplapply being the important one.
-The behaviour of these functions is described in the man pages.
+Reference class .AWSBatchJobsParam allows use AWS EC2 as Clusters
+}
+\details{
+The .AWSBatchJobsParam class extends the BatchJobsParam class to allow
+usage of AWS EC2-instances for parallel computation. The methods follow a
+style similar to that of BiocParallelParams, with bpstart, bpstop, bpisup,
+bplapply being the important one. The behaviour of these functions is
+described in the man pages.
 }
 \section{Fields}{
 
@@ -23,14 +25,8 @@ The behaviour of these functions is described in the man pages.
 
 \item{\code{awsSubnet}}{AWS EC2-instance subnet, within a certain VPC}
 
-\item{\code{awsSecurityGroup}}{Secutiry group which assigns inbound and
-outbound traffic at the instance level}
-
-\item{\code{awsInstance}}{A list, created holding all the information of
-the AWS instance}
-
 \item{\code{awsAmiId}}{AMI(amazon machine image) ID for the
-Bioconductor-release version}
+Bioconductor-starcluster image. Correct ID is needed.}
 
 \item{\code{awsSshKeyPair}}{SSH key pair, to associate with your AWS
 EC2-instance}
