@@ -238,8 +238,12 @@ awsProfile <-
 #' BiocParallel functions like bpstart, bpstop. It is used to setup
 #' or start a new or existing cluster on the user's AWS account. Once
 #' a cluster is up an running, it should be safely suspended or terminated
-#' using functionality like 'bpsuspend' and 'bpteardown'.
+#' using functionality like 'bpsuspend' and 'bpteardown'. NOTE: This function
+#' takes a while to process, depending on the number of workers needed 
+#' it may take upto 4-5 minutes.
+#' 
 #'
+#' 
 #' @param x AWSBatchJobsParam object
 #' @param clustername character value given to the cluster.
 #' @export
@@ -259,10 +263,13 @@ bpsetup <-
                         )
     args <- c("start", clustername)
     res <- system2("starcluster", args=args)
-
-    if (res == 1) {
+    ## If res!=0 then fail.
+    if (res != 0) {
         stop("Cluster failed to launch, please check the settings")
     }
+    ## Once cluster is started transfer config file to master node
+    transferToCluster(clustername, "~/.starcluster/config",
+                      "~/.starcluster/config") 
 }
 
 #' Suspend an AWS EC2 cluster started using bpsetup
@@ -281,7 +288,7 @@ bpsuspend <-
     args <- c("stop", "--confirm", clustername)
     res <- system2("starcluster", args=args)
     ## Throw error if unsuccessful
-    if (res == 1) {
+    if (res != 0) {
         stop("Error suspending cluster. Please check your AWS",
              "account for these instances.")
     }
@@ -307,7 +314,7 @@ bpteardown <-
 {
     args <- c("terminate", "-f", "--confirm", clustername)
     res <- system2("starcluster", args=args)
-    if (res == 1) {
+    if (res !=0 ) {
         stop("Error terminating cluster. Please check your AWS",
              "account for these instances or run bpteardown again.")
     }

@@ -235,26 +235,35 @@ getStarclusterAmiId <-
 #'
 #' @param clustername character vector of the clustername
 #' @param starcluster_config character vector of path to starcluster config
-.transferStarclusterConfig <-
-    function(clustername, starcluster_config = "~/.starcluster/config")
+transferToCluster <-
+    function(clustername,
+             localPath,
+             remotePath)
 {
+    ## Check if clustername exists  
     args <- c("put", clustername,
               "--node", paste0(clustername,"-master"),
               "--user", "ubuntu",
-              starcluster_config,
-              starcluster_config)
-    system2("starcluster", args = args)
+              localPath,
+              remotePath)
+    res  <- system2("starcluster", args = args)
+    if (res !=0) {
+        stop("There was an error transferring your file")
+    }
 }
 
+## TODO: transferToCluster(clustername, "~/.starcluster/config", "~/.starcluster/config)
+
 #' Function to return the names of Clusters launched.
-.awsParallelListClusters <-
+awsParallelListClusters <-
     function()
     {
         args <- c("listclusters")
-        res <- system2("starcluster", args = args, stdout=TRUE)
-        clusterTagIdx <- length(grep("-------", res))/2
+        res <- system2("starcluster", args = args, stdout=TRUE,stderr=FALSE)
+        clusterTagIdx <- grep("-------", res)
         skipper <- seq(1, length(clusterTagIdx), by=2)
-        clusterNameIdx <- colMeans(rbind(xx[skipper], xx[skipper+1]))
+        clusterNameIdx <- colMeans(rbind(clusterTagIdx[skipper],
+                                         clusterTagIdx[skipper+1]))
         ## Return Name of clusters in Starcluster
         res[clusterNameIdx]
     }

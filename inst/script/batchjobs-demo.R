@@ -18,6 +18,11 @@ subnet <- "subnet-d66a05ec"
 ## Bioc-devel with starcluster
 image <- "ami-0454187e"
 
+## If you don't have a key you use, just create a new one
+## for AWSParallel, and use that throughout.
+
+#awsCreateKeyPair()
+
 keyPair <- "mykey"
 
 
@@ -28,7 +33,7 @@ aws <- AWSBatchJobsParam(workers = workers,
                   awsSubnet = subnet,
                   awsAmiId = image,
                   awsSshKeyPair = keyPair,
-                  awsProfile="CloudCluster")
+                  awsProfile="default")
 
 aws
 
