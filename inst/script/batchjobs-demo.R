@@ -3,7 +3,7 @@
 ### HOST MACHINE
 ###########################################
 library(AWSParallel)
-
+devtools::load_all()
 ## NOTE: Make sure ~/.aws/credentials are available
 
 ## Include Number of workers as 2
