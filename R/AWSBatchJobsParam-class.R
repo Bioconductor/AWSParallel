@@ -126,7 +126,7 @@ AWSBatchJobsParam <-
         cidr_ip <- config[["permission http"]][["CIDR_IP"]]
         ## FIXME:
         ## allow function arguments to override config? maybe later
-    } 
+    }
     ## FIXME: For a later stage
     #else {
     #    if (is.na(awsAmiId))
@@ -288,7 +288,9 @@ bpsetup <-
     }
     ## Once cluster is started transfer config file to master node
     transferToCluster(clustername, "~/.starcluster/config",
-                      "~/.starcluster/config") 
+                      "~/.starcluster/config")
+    transferToCluster(clustername, "~/.aws/credentials",
+                      "~/.aws/credentials")
     ## Register AWSBatchJobsParam in the BiocParallelRegistry
     
 }
