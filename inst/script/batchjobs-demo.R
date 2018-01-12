@@ -3,8 +3,8 @@
 # ###########################################
 library(AWSParallel)
 
-## Set required arguments
-
+## Set required arguments and define credentials
+## This DEMO requires AWS credentials
 
 ## Include Number of workers as 2
 workers = 2
@@ -35,27 +35,18 @@ aws <- AWSBatchJobsParam(workers = workers,
                   awsSshKeyPair = keyPair,
                   awsProfile="default")
 
+## Show object aws
 aws
 
+## Setup AWS cluster (takes a few mins)
 bpsetup(aws)
 
+## Suspend AWS cluster 
 bpsuspend(aws)
 
+## Terminate or teardown AWS cluster
 bpteardown(aws)
 
-
-
-## Test .config_starcluster
-## .config_starcluster(workers=2,
-##                     awsCredentialsPath = "~/.aws/credentials",
-##                     awsInstanceType = awsInstanceType,
-##                     awsSubnet = awsSubnet,
-##                     awsAmiId = awsAmiId,
-##                     awsSshKeyPair = awsSshKeyPair,
-##                     awsProfile = awsProfile,
-##                     user = "ubuntu",
-##                     cidr_ip = "172.30.0.0/16"
-##                     )
 
 
 #

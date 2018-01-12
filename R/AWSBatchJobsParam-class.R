@@ -32,10 +32,10 @@
             callSuper()
             cat("  awsCredentialsPath: ", awsCredentialsPath(.self),
                 "\n  awsInstanceType: ", awsInstanceType(.self),
-                "\n awsSubnet: ", awsSubnet(.self),
-                "\n awsAmiId: ", awsAmiId(.self),
-                "\n awsSshKeyPair: ", awsSshKeyPair(.self),
-                "\n awsProfile: ", awsProfile(.self),
+                "\n  awsSubnet: ", awsSubnet(.self),
+                "\n  awsAmiId: ", awsAmiId(.self),
+                "\n  awsSshKeyPair: ", awsSshKeyPair(.self),
+                "\n  awsProfile: ", awsProfile(.self),
                 "\n",
                 sep="")
         }
@@ -270,6 +270,8 @@ bpsetup <-
     ## Once cluster is started transfer config file to master node
     transferToCluster(clustername, "~/.starcluster/config",
                       "~/.starcluster/config") 
+    ## Register AWSBatchJobsParam in the BiocParallelRegistry
+    
 }
 
 #' Suspend an AWS EC2 cluster started using bpsetup

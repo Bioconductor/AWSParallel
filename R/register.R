@@ -3,7 +3,7 @@
 ### This class is similar to BiocParallelRegistry
 ### -------------------------------------------------------------------------
 
-.registry <- setRefClass(".BiocParallelRegistry",
+.registry <- setRefClass(".AWSParallelRegistry",
     fields=list(
         bpparams = "list"),
     methods=list(
@@ -32,19 +32,16 @@
 .registry_init <- function() {
     multicore <- (parallel::detectCores() - 2L) > 1L
     tryCatch({
-        if ((.Platform$OS.type == "windows") && multicore) {
-            .register(getOption("SnowParam", SnowParam()), TRUE)
-            .register(getOption("SerialParam", SerialParam()), FALSE)
-        } else if (multicore) {
+        if (multicore) {
             ## linux / mac
-            .register(getOption("MulticoreParam", MulticoreParam()), TRUE)
+            .register(.getAWSBatchJobsParamOnMaster(), TRUE)
             .register(getOption("SnowParam", SnowParam()), FALSE)
             .register(getOption("SerialParam", SerialParam()), FALSE)
         } else {
-            .register(getOption("SerialParam", SerialParam()), TRUE)
+            .register(.getAWSBatchJobsParamOnMaster(), TRUE)
         }
     }, error=function(err) {
-        message("'BiocParallel' did not register default ",
+        message("'AWSParallel' did not register default ",
                 "BiocParallelParams:\n  ", conditionMessage(err))
         NULL
     })
