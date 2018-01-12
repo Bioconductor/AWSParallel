@@ -82,49 +82,56 @@
 #' @importFrom aws.signature use_credentials
 #' @exportClass AWSBatchJobsParam
 #' @export
+##
+## aws, starclusterConfigPaths exist: AWSBatchJobsParam() constructs a
+## valid object
+##
+## starclusterCredentialsPaths does not exist: create from arguments
 AWSBatchJobsParam <-
     function(workers = 2,
-             awsCredentialsPath = NA_character_,
+             starclusterConfigPath = "~/.starcluster/config",
              awsInstanceType = NA_character_,
              awsSubnet = NA_character_,
              awsAmiId = NA_character_,
              awsSshKeyPair = NA_character_,
-             awsProfile = "default",
              user="ubuntu",
-             verbose = FALSE
+             awsCredentialsPath = "~/.aws/credentials",
+             awsProfile = "default"
              )
 {
     # Check AWS profile
-    stopifnot(length(awsProfile) == 1L, is.character(awsProfile))
-
-    ## Validate AWS Credentials Path
-    if (is.na(awsCredentialsPath)) {
-        if (.Platform$OS.type == "unix") {
-            awsCredentialsPath = "~/.aws/credentials"
-            ## Use credentials
-            use_credentials(profile=awsProfile, file=awsCredentialsPath)
-        } else {
-            message("Please launch EC2 master instance following the vignette")
-        }
-    }
     stopifnot(
         file.exists(awsCredentialsPath),
-        !missing(awsInstanceType),
-        !missing(awsSshKeyPair),
+        length(awsProfile) == 1L, is.character(awsProfile),
         length(user) == 1L, is.character(user)
+    )
+    if (.Platform$OS.type == "windows")
+        stop("'AWSBatchJobsParam' not supported on Windows")
+
+    ## Validate AWS Credentials Path
+    if (file.exists(starclusterConfigPath)) {
+        ## read config, extract awsInstanceType, awsSubnet, awsAmiId,
+        ## awsSshKeyPair
+
+        ## allow function arguments to override config? maybe later
+    } else {
+        if (is.na(awsAmiId))
+            awsAmiId <- getStarclusterAmiId()
+        if (is.na(awsSubnet))
+            ## If on a master node
+            awsSubnet <- .awsDetectSubnetOnMaster()
+    }
+
+    stopifnot(
+        length(awsInstanceType) == 1L, !is.na(awsInstanceType),
+        length(awsSubnet) == 1L, !is.na(awsSubnet),
+        length(awsAmiId) == 1L, !is.na(awsAmiId),
+        length(awsInstanceType) == 1L, !is.na(awsInstanceType),
+        length(awsSshKeyPair) == 1L, !is.na(awsSshKeyPair)
     )
 
     ## If missing, default to release version of AMI
     ## FIXME: this AMI ID needs to be for starcluster AMI
-    if (missing(awsAmiId)) {
-        awsAmiId <- getStarclusterAmiId()
-    }
-
-    ## If subnet is missing, assign
-    if (missing(awsSubnet)) {
-        ## If on a master node
-        awsSubnet <- .awsDetectSubnetOnMaster()
-    }
 
     ## Initiate .AWSBatchJobsParam class
     x <- .AWSBatchJobsParam(
