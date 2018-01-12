@@ -149,7 +149,8 @@ AWSBatchJobsParam <-
         awsSubnet = awsSubnet,
         awsAmiId = awsAmiId,
         awsSshKeyPair = awsSshKeyPair,
-        awsProfile = awsProfile
+        awsProfile = awsProfile,
+        cleanup=TRUE
     )
     validObject(x)
     x
