@@ -102,8 +102,7 @@ AWSBatchJobsParam <-
     # Check AWS profile
     stopifnot(
         file.exists(awsCredentialsPath),
-        length(awsProfile) == 1L, is.character(awsProfile),
-        length(user) == 1L, is.character(user)
+        length(awsProfile) == 1L, is.character(awsProfile)
     )
     if (.Platform$OS.type == "windows")
         stop("'AWSBatchJobsParam' not supported on Windows")
@@ -112,7 +111,7 @@ AWSBatchJobsParam <-
     if (file.exists(starclusterConfigPath)) {
         ## read config
 
-        config <- read.ini(starclusterConfig)
+        config <- read.ini(starclusterConfigPath)
         ## extract awsInstanceType, awsSubnet, awsAmiId, awsSshKeyPair
         awsInstanceType <- config[["cluster smallcluster"]][["NODE_INSTANCE_TYPE"]]
         awsSubnet <- config[["cluster smallcluster"]][["SUBNET_IDS"]]
@@ -273,7 +272,6 @@ bpsetup <-
                         awsAmiId = awsAmiId(x),
                         awsSshKeyPair = awsSshKeyPair(x),
                         awsProfile = awsProfile(x),
-                        user = "ubuntu",
                         cidr_ip = "172.30.0.0/16"
                         )
     args <- c("start", clustername)
