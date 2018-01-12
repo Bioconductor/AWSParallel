@@ -296,38 +296,3 @@ awsParallelListClusters <-
         ## Return Name of clusters in Starcluster
         res[clusterNameIdx]
     }
-
-
-#' This function registers AWSBatchJobsParam on the master
-#'
-#' @param starclusterConfig character vector to the path of starcluster config.
-.getAWSBatchJobsParamOnMaster <- 
-    function(starclusterConfig="~/.starcluster/config")
-{
-    config <- read.ini(starclusterConfig)
-
-    ## Process AWS credentials
-    ## FIXME:  This might change based on where users
-    ## put their aws credentials
-    awsCredentialsPath <- "~/.aws/credentials"
-
-    ## Process AWS instance configuration
-    config[["cluster smallcluster"]][["SUBNET_IDS"]] -> awsSubnet
-    config[["cluster smallcluster"]][["CLUSTER_SIZE"]] -> workers
-    config[["cluster smallcluster"]][["CLUSTER_USER"]] -> user
-    config[["cluster smallcluster"]][["KEYNAME"]] -> awsSshKeyPair
-    config[["cluster smallcluster"]][["NODE_INSTANCE_TYPE"]] -> awsInstanceType
-    config[["cluster smallcluster"]][["NODE_IMAGE_ID"]] -> awsAmiId
-
-    ## Process CIDR block
-    config[["permission http"]][["CIDR_IP"]] -> cidr_ip
-
-    
-    ## Construct AWSBatchJobsParam class
-    AWSBatchJobsParam(workers = workers,
-                      awsCredentialsPath = awsCredentialsPath,
-                      awsInstanceType = awsInstanceType,
-                      awsSubnet = awsSubnet,
-                      awsAmiId = awsAmiId,
-                      awsSshKeyPair = awsSshKeyPair)
-}

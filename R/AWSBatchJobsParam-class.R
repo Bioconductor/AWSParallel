@@ -80,6 +80,7 @@
 #' }
 #' @importFrom aws.ec2 my_ip
 #' @importFrom aws.signature use_credentials
+#' @importFrom ini read.ini
 #' @exportClass AWSBatchJobsParam
 #' @export
 ##
@@ -94,7 +95,6 @@ AWSBatchJobsParam <-
              awsSubnet = NA_character_,
              awsAmiId = NA_character_,
              awsSshKeyPair = NA_character_,
-             user="ubuntu",
              awsCredentialsPath = "~/.aws/credentials",
              awsProfile = "default"
              )
@@ -110,9 +110,17 @@ AWSBatchJobsParam <-
 
     ## Validate AWS Credentials Path
     if (file.exists(starclusterConfigPath)) {
-        ## read config, extract awsInstanceType, awsSubnet, awsAmiId,
-        ## awsSshKeyPair
+        ## read config
 
+        config <- read.ini(starclusterConfig)
+        ## extract awsInstanceType, awsSubnet, awsAmiId, awsSshKeyPair
+        awsInstanceType <- config[["cluster smallcluster"]][["NODE_INSTANCE_TYPE"]]
+        awsSubnet <- config[["cluster smallcluster"]][["SUBNET_IDS"]]
+        awsAmiId <- config[["cluster smallcluster"]][["NODE_IMAGE_ID"]]
+        awsSshKeyPair <- config[["cluster smallcluster"]][["KEYNAME"]]
+        workers <- config[["cluster smallcluster"]][["CLUSTER_SIZE"]]
+        cidr_ip <- config[["permission http"]][["CIDR_IP"]]
+        ## FIXME:
         ## allow function arguments to override config? maybe later
     } else {
         if (is.na(awsAmiId))
