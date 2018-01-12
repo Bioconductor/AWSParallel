@@ -227,6 +227,7 @@ getStarclusterAmiId <-
     "ami-0454187e"
 }
 
+
 #' Allows transfer of files from Host machine, to master node on cluster.
 #'
 #' Follows this command
@@ -235,6 +236,7 @@ getStarclusterAmiId <-
 #'
 #' @param clustername character vector of the clustername
 #' @param starcluster_config character vector of path to starcluster config
+#' @export
 transferToCluster <-
     function(clustername,
              localPath,
@@ -252,9 +254,36 @@ transferToCluster <-
     }
 }
 
-## TODO: transferToCluster(clustername, "~/.starcluster/config", "~/.starcluster/config)
+
+#' Allows transfer of files from master node to the host machine..
+#'
+#' Follows this command
+#'     #  starcluster get mycluster --node mycluster-master
+#'     #                            --user myuser /remote/path /local/path
+#'
+#' @param clustername character vector of the clustername
+#' @param starcluster_config character vector of path to starcluster config
+#' @export
+transferFromCluster <-
+    function(clustername,
+             remotePath,
+             localPath)
+{
+    ## Check if clustername exists  
+    args <- c("get", clustername,
+              "--node", paste0(clustername,"-master"),
+              "--user", "ubuntu",
+              remotePath,
+              localPath)
+    res  <- system2("starcluster", args = args)
+    if (res !=0) {
+        stop("There was an error transferring your file")
+    }
+}
+
 
 #' Function to return the names of Clusters launched.
+#' 
 awsParallelListClusters <-
     function()
     {

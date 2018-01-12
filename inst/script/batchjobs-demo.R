@@ -55,18 +55,18 @@ starcluster sshmaster -u ubuntu awsparallel
 
 ## Load AWSParallel
 library(AWSParallel)
-param <- AWSBatchJobsParam()
 
-register(param)
+##param <- AWSBatchJobsParam()
+##register(param)
+
 FUN <- function(i) system("hostname", intern=TRUE)
 xx <- bplapply(1:100, FUN)
 table(unlist(xx))
 
 # bpstart(aws)
-#
-#
-# ## Return cluster which was started
-# awsCluster()
+
+## Return cluster which was started
+awsListCluster()
 #
 # ## Check is instance is up
 # awsClusterStatus(aws)
