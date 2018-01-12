@@ -108,9 +108,14 @@ AWSBatchJobsParam <-
         stop("'AWSBatchJobsParam' not supported on Windows")
 
     ## Validate AWS Credentials Path
-    if (file.exists(starclusterConfigPath)) {
+    if (file.exists(starclusterConfigPath) && 
+        is.na(awsInstanceType) && 
+        is.na(awsSubnet) && 
+        is.na(awsAmiId) &&
+        is.na(awsSshKeyPair) && 
+        is.na(workers)
+        )  {
         ## read config
-
         config <- read.ini(starclusterConfigPath)
         ## extract awsInstanceType, awsSubnet, awsAmiId, awsSshKeyPair
         awsInstanceType <- config[["cluster smallcluster"]][["NODE_INSTANCE_TYPE"]]
@@ -121,13 +126,15 @@ AWSBatchJobsParam <-
         cidr_ip <- config[["permission http"]][["CIDR_IP"]]
         ## FIXME:
         ## allow function arguments to override config? maybe later
-    } else {
-        if (is.na(awsAmiId))
-            awsAmiId <- getStarclusterAmiId()
-        if (is.na(awsSubnet))
-            ## If on a master node
-            awsSubnet <- .awsDetectSubnetOnMaster()
-    }
+    } 
+    ## FIXME: For a later stage
+    #else {
+    #    if (is.na(awsAmiId))
+    #        awsAmiId <- getStarclusterAmiId()
+    #    if (is.na(awsSubnet))
+    #        ## If on a master node
+    #        awsSubnet <- .awsDetectSubnetOnMaster()
+    #}
 
     stopifnot(
         length(awsInstanceType) == 1L, !is.na(awsInstanceType),
