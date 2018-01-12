@@ -101,20 +101,14 @@ AWSBatchJobsParam <-
 {
     # Check AWS profile
     stopifnot(
-        file.exists(awsCredentialsPath),
         length(awsProfile) == 1L, is.character(awsProfile)
     )
     if (.Platform$OS.type == "windows")
         stop("'AWSBatchJobsParam' not supported on Windows")
 
     ## Validate AWS Credentials Path
-    if (file.exists(starclusterConfigPath) && 
-        is.na(awsInstanceType) && 
-        is.na(awsSubnet) && 
-        is.na(awsAmiId) &&
-        is.na(awsSshKeyPair) && 
-        is.na(workers)
-        )  {
+    if (file.exists(starclusterConfigPath))
+    {
         ## read config
         config <- read.ini(starclusterConfigPath)
         ## extract awsInstanceType, awsSubnet, awsAmiId, awsSshKeyPair
@@ -270,7 +264,6 @@ awsProfile <-
 bpsetup <-
     function(x, clustername="awsparallel")
 {
-
     .config_starcluster(workers = awsWorkers(x),
                         awsCredentialsPath = awsCredentialsPath(x),
                         awsInstanceType = awsInstanceType(x),
@@ -289,8 +282,6 @@ bpsetup <-
     ## Once cluster is started transfer config file to master node
     transferToCluster(clustername, "~/.starcluster/config",
                       "~/.starcluster/config")
-    transferToCluster(clustername, "~/.aws/credentials",
-                      "~/.aws/credentials")
     ## Register AWSBatchJobsParam in the BiocParallelRegistry
     
 }

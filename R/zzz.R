@@ -10,6 +10,7 @@
         register(AWSBatchJobsParam())
     }, error = function(e) {
             warning("Missing arguments to AWSBatchJobsParam",
+                    conditionMessage(e),
                     call.=FALSE)
     })
 }
