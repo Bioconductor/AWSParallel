@@ -133,7 +133,6 @@ AWSBatchJobsParam <-
         length(awsInstanceType) == 1L, !is.na(awsInstanceType),
         length(awsSubnet) == 1L, !is.na(awsSubnet),
         length(awsAmiId) == 1L, !is.na(awsAmiId),
-        length(awsInstanceType) == 1L, !is.na(awsInstanceType),
         length(awsSshKeyPair) == 1L, !is.na(awsSshKeyPair)
     )
 
