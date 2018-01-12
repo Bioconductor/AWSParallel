@@ -4,16 +4,15 @@
 \alias{AWSBatchJobsParam}
 \title{AWSBatchJobsParam function to start an AWS EC2-instance cluster}
 \usage{
-AWSBatchJobsParam(workers = 2, awsCredentialsPath = NA_character_,
+AWSBatchJobsParam(workers = 2,
+  starclusterConfigPath = "~/.starcluster/config",
   awsInstanceType = NA_character_, awsSubnet = NA_character_,
   awsAmiId = NA_character_, awsSshKeyPair = NA_character_,
-  awsProfile = "default", user = "ubuntu", verbose = FALSE)
+  user = "ubuntu", awsCredentialsPath = "~/.aws/credentials",
+  awsProfile = "default")
 }
 \arguments{
 \item{workers}{Numeric, number of workers to launch in the cluster}
-
-\item{awsCredentialsPath}{character, Path to AWS credentials,
-default value is `~/.aws/credentials`}
 
 \item{awsInstanceType}{character, Type of AWS EC2-instance,
 eg. t2.micro}
@@ -26,6 +25,9 @@ Bioconductor-release version}
 
 \item{awsSshKeyPair}{character, SSH key pair, to associate with
 your AWS EC2-instance}
+
+\item{awsCredentialsPath}{character, Path to AWS credentials,
+default value is `~/.aws/credentials`}
 
 \item{awsProfile}{character, indicates what profile to use while
 using AWS credentials}

@@ -417,7 +417,7 @@ awsInstanceStatus <- function(x)
     }
 }
 
-#' Check if AWS cluster is up
+## Check if AWS cluster is up
 .awsisup <- function(x)
 {
     awsInstanceStatus(x) == "running"

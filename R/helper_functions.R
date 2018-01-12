@@ -295,11 +295,10 @@ awsParallelListClusters <-
 
     
     ## Construct AWSBatchJobsParam class
-    aws <- AWSBatchJobsParam(workers = workers,
-                             awsCredentialsPath = awsCredentialsPath,
-                             awsInstanceType = awsInstanceType,
-                             awsSubnet = awsSubnet,
-                             awsAmiId = awsAmiId,
-                             awsSshKeyPair = awsSshKeyPair)
-    aws
+    AWSBatchJobsParam(workers = workers,
+                      awsCredentialsPath = awsCredentialsPath,
+                      awsInstanceType = awsInstanceType,
+                      awsSubnet = awsSubnet,
+                      awsAmiId = awsAmiId,
+                      awsSshKeyPair = awsSshKeyPair)
 }
