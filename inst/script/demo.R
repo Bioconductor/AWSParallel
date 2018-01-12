@@ -4,7 +4,7 @@
 library(AWSParallel)
 
 ## Bioc-devel 
-image <-  "ami-9fe2fee4"
+image <-  "ami-2951fa53"
 
 ## Include Number of workers as 2
 workers = 2
@@ -25,7 +25,7 @@ aws <- AWSSnowParam(
     awsAmiId= image,
     awsSshKeyPair = awsSshKeyPair,
     bplib="/home/ubuntu/R/x86_64-pc-linux-gnu-library/3.4/BiocParallel",
-    awsCredentialsPath="/home/ubuntu/credentials"
+    awsCredentialsPath=creds_path
     )
 
 aws
