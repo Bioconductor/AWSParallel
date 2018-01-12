@@ -12,7 +12,7 @@ credentialsPath = "~/.aws/credentials"
 instanceType = "t2.micro"
 subnet <- "subnet-d66a05ec"
 ## Bioc-devel with starcluster
-image <- "ami-0454187e"
+image <- "ami-5121052b"
 ## If you don't have a key you use, just create a new one
 ## for AWSParallel, and use that throughout.
 keyPair <- "mykey"

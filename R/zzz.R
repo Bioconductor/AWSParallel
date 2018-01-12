@@ -6,6 +6,10 @@
     if (test)
         warning("You need to provide arguments for invoking AWSBatchJobsParam")
     else{
-        register(AWSBatchJobsParam())
+        res <- tryCatch({
+            register(AWSBatchJobsParam())
+        }, error = function(e) {
+            warning("Missing arguments for AWSBatchJobsParam")
+        })
     }
 }
