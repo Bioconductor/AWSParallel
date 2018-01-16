@@ -8,8 +8,7 @@ AWSBatchJobsParam(workers = 2,
   starclusterConfigPath = "~/.starcluster/config",
   awsInstanceType = NA_character_, awsSubnet = NA_character_,
   awsAmiId = NA_character_, awsSshKeyPair = NA_character_,
-  user = "ubuntu", awsCredentialsPath = "~/.aws/credentials",
-  awsProfile = "default")
+  awsCredentialsPath = "~/.aws/credentials", awsProfile = "default", ...)
 }
 \arguments{
 \item{workers}{Numeric, number of workers to launch in the cluster}
@@ -32,8 +31,10 @@ default value is `~/.aws/credentials`}
 \item{awsProfile}{character, indicates what profile to use while
 using AWS credentials}
 
-\item{verbose}{logical, gives a verbose output of SSH
-connection attempt, default is FALSE.}
+\item{...}{Additional arguments, used to initialize BatchJobsParam.}
+
+\item{verbose}{logical, gives a verbose output of SSH connection
+attempt, default is FALSE.}
 }
 \value{
 AWSSnowParam object
