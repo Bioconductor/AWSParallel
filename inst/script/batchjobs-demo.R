@@ -51,16 +51,21 @@ starcluster sshmaster -u ubuntu awsparallel
 ## USE CLUSTER on MASTER NODE
 #########################################
 
+git pull
+git checkout AWSBatchParam-class
 ## Start R
 
 ## Load AWSParallel
 library(AWSParallel)
+devtools::load_all()
 
 ##param <- AWSBatchJobsParam()
 ##register(param)
 
+
 FUN <- function(i) system("hostname", intern=TRUE)
 xx <- bplapply(1:100, FUN)
+
 table(unlist(xx))
 
 # bpstart(aws)
