@@ -15,6 +15,7 @@
 #' @field awsSshKeyPair SSH key pair, to associate with your AWS
 #'     EC2-instance
 #' @importFrom methods new validObject callNextMethod
+#' @importFrom BiocParallel BatchJobsParam
 #' @importClassesFrom BiocParallel BatchJobsParam BiocParallelParam
 .AWSBatchJobsParam <- setRefClass(
     "AWSBatchJobsParam",
@@ -142,6 +143,7 @@ AWSBatchJobsParam <-
 
     ## Initiate .AWSBatchJobsParam class
     x <- .AWSBatchJobsParam(
+        BatchJobsParam(),
         workers = workers,
         ## AWSBatchJobsParam fields
         awsCredentialsPath = awsCredentialsPath,
@@ -149,8 +151,7 @@ AWSBatchJobsParam <-
         awsSubnet = awsSubnet,
         awsAmiId = awsAmiId,
         awsSshKeyPair = awsSshKeyPair,
-        awsProfile = awsProfile,
-        cleanup=TRUE
+        awsProfile = awsProfile
     )
     validObject(x)
     x
