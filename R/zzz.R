@@ -1,16 +1,28 @@
+.STARCLUSTER_CONFIG_PATH <- "~/.starcluster/config"
+
+.registerOnStartup <-
+    function()
+{
+    test <- !file.exists(.STARCLUSTER_CONFIG_PATH)
+    if (test)
+        warning(
+            "'AWSBatchJobsParam()' registered without starcluster configuration; see ?AWSBatchJobsParam",
+            call.=FALSE
+        )
+    res <- tryCatch({
+        aws <- AWSBatchJobsParam()
+        register(aws)
+    }, error = function(e) {
+        warning(
+            "'.onLoad()' failed to register 'AWSBatchJobsParam():",
+            "\n  ", conditionMessage(e),
+            call.=FALSE
+        )
+    })
+}        
+
 .onLoad <-
     function(libname, pkgname)
 {
-    test <- !file.exists("~/.starcluster/config")
-    if (test)
-        warning("Cannot register AWSBatchJobsParam, without starcluster config and",
-                " aws credentials. Pleaes read vignette for details.",
-                call.=FALSE)
-    res <- tryCatch({
-        register(AWSBatchJobsParam())
-    }, error = function(e) {
-            warning("Missing arguments to AWSBatchJobsParam",
-                    conditionMessage(e),
-                    call.=FALSE)
-    })
+    .registerOnStartup()
 }

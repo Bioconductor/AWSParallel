@@ -15,6 +15,7 @@
 #' @field awsSshKeyPair SSH key pair, to associate with your AWS
 #'     EC2-instance
 #' @importFrom methods new validObject callNextMethod
+#' @importFrom BiocParallel BatchJobsParam
 #' @importClassesFrom BiocParallel BatchJobsParam BiocParallelParam
 .AWSBatchJobsParam <- setRefClass(
     "AWSBatchJobsParam",
@@ -63,8 +64,9 @@
 #'     your AWS EC2-instance
 #' @param awsProfile character, indicates what profile to use while
 #'     using AWS credentials
-#' @param verbose logical, gives a verbose output of SSH
-#'     connection attempt, default is FALSE.
+#' @param verbose logical, gives a verbose output of SSH connection
+#'     attempt, default is FALSE.
+#' @param ... Additional arguments, used to initialize BatchJobsParam.
 #' @return AWSSnowParam object
 #' @examples
 #' \dontrun{
@@ -82,24 +84,51 @@
 #' @importFrom aws.signature use_credentials
 #' @importFrom ini read.ini
 #' @exportClass AWSBatchJobsParam
-#' @export
 ##
 ## aws, starclusterConfigPaths exist: AWSBatchJobsParam() constructs a
 ## valid object
 ##
 ## starclusterCredentialsPaths does not exist: create from arguments
+
+.starcluster_option <-
+    function(config, cluster_id, option_value, default_value)
+{
+    if (!is.null(default_value))
+        default_value
+    else
+        config[[cluster_id]][[option_value]]
+}
+
+#' @export
 AWSBatchJobsParam <-
-    function(workers = 2,
-             starclusterConfigPath = "~/.starcluster/config",
+    function(workers = NULL,
+             starclusterConfigPath = .STARCLUSTER_CONFIG_PATH,
+             startclusterClusterId = "smallcluster",
+             ## for bpsetup() only
              awsInstanceType = NA_character_,
              awsSubnet = NA_character_,
              awsAmiId = NA_character_,
              awsSshKeyPair = NA_character_,
              awsCredentialsPath = "~/.aws/credentials",
-             awsProfile = "default"
+             awsProfile = "default",
+             ## for BatchJobsParam()
+             ...
              )
 {
-    # Check AWS profile
+    ## Check AWS profile
+    setup <- !missing(awsInstanceType) || !missing(awsSubnet) ||
+        !missing(awsAmiId) || !missing(awsSshKeyPair)
+    ## FIXME: what if awsCredentialsPath doesn't have awsProfile?
+    user <- !missing(starclusterConfigPath) || !missing(startclusterClusterId)
+    ## FIXME: check that clusterId exists in configPath
+
+    if (setup && user)
+        stop("'AWSBatchJobsParam()' requires either 'startclusterConfig*' _or_ 'aws*' arguments", call.=FALSE)
+    if (!setup && !user) {
+        if (is.null(workers))
+            workers <- 0L
+        return(.AWSBatchJobsParam(BatchJobsParam(...), workers=workers))
+    }
     stopifnot(
         length(awsProfile) == 1L, is.character(awsProfile)
     )
@@ -109,14 +138,22 @@ AWSBatchJobsParam <-
     ## Validate AWS Credentials Path
     if (file.exists(starclusterConfigPath))
     {
+        if (!missing(awsInstanceType)) {
+            warning(
+                "'awsInstanceType' ignored when 'starclusterConfigPath' exists"
+            )
+        }
         ## read config
         config <- read.ini(starclusterConfigPath)
+        clusterId <- paste("cluster", startclusterClusterId)
         ## extract awsInstanceType, awsSubnet, awsAmiId, awsSshKeyPair
-        awsInstanceType <- config[["cluster smallcluster"]][["NODE_INSTANCE_TYPE"]]
-        awsSubnet <- config[["cluster smallcluster"]][["SUBNET_IDS"]]
-        awsAmiId <- config[["cluster smallcluster"]][["NODE_IMAGE_ID"]]
-        awsSshKeyPair <- config[["cluster smallcluster"]][["KEYNAME"]]
-        workers <- config[["cluster smallcluster"]][["CLUSTER_SIZE"]]
+        awsInstanceType <- config[[clusterId]][["NODE_INSTANCE_TYPE"]]
+        awsSubnet <- config[[clusterId]][["SUBNET_IDS"]]
+        awsAmiId <- config[[clusterId]][["NODE_IMAGE_ID"]]
+        awsSshKeyPair <- config[[clusterId]][["KEYNAME"]]
+        workers <- .starcluster_option(
+            config, clusterId, "CLUSTER_SIZE", workers
+        )
         cidr_ip <- config[["permission http"]][["CIDR_IP"]]
         ## FIXME:
         ## allow function arguments to override config? maybe later
@@ -142,6 +179,7 @@ AWSBatchJobsParam <-
 
     ## Initiate .AWSBatchJobsParam class
     x <- .AWSBatchJobsParam(
+        BatchJobsParam(...),
         workers = workers,
         ## AWSBatchJobsParam fields
         awsCredentialsPath = awsCredentialsPath,
@@ -149,8 +187,7 @@ AWSBatchJobsParam <-
         awsSubnet = awsSubnet,
         awsAmiId = awsAmiId,
         awsSshKeyPair = awsSshKeyPair,
-        awsProfile = awsProfile,
-        cleanup=TRUE
+        awsProfile = awsProfile
     )
     validObject(x)
     x
