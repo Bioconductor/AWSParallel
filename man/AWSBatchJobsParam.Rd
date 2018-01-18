@@ -4,11 +4,12 @@
 \alias{AWSBatchJobsParam}
 \title{AWSBatchJobsParam function to start an AWS EC2-instance cluster}
 \usage{
-AWSBatchJobsParam(workers = 2,
-  starclusterConfigPath = "~/.starcluster/config",
-  awsInstanceType = NA_character_, awsSubnet = NA_character_,
-  awsAmiId = NA_character_, awsSshKeyPair = NA_character_,
-  awsCredentialsPath = "~/.aws/credentials", awsProfile = "default", ...)
+AWSBatchJobsParam(workers = NULL,
+  starclusterConfigPath = .STARCLUSTER_CONFIG_PATH,
+  startclusterClusterId = "smallcluster", awsInstanceType = NA_character_,
+  awsSubnet = NA_character_, awsAmiId = NA_character_,
+  awsSshKeyPair = NA_character_, awsCredentialsPath = "~/.aws/credentials",
+  awsProfile = "default", ...)
 }
 \arguments{
 \item{workers}{Numeric, number of workers to launch in the cluster}
@@ -37,7 +38,7 @@ using AWS credentials}
 attempt, default is FALSE.}
 }
 \value{
-AWSSnowParam object
+AWSBatchJobsparam object
 }
 \description{
 This function starts a cluster of AWS EC2-instances to allow

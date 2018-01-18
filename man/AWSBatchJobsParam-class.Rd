@@ -4,14 +4,13 @@
 \name{AWSBatchJobsParam-class}
 \alias{AWSBatchJobsParam-class}
 \alias{.AWSBatchJobsParam}
-\title{Reference class .AWSBatchJobsParam allows use AWS EC2 as Clusters}
-\description{
-The .AWSBatchJobsParam class extends the BatchJobsParam class to allow
-usage of AWS EC2-instances for parallel computation. The methods follow a
-style similar to that of BiocParallelParams, with bpstart, bpstop, bpisup,
-bplapply being the important one. The behaviour of these functions is
-described in the man pages.
-}
+\title{Reference class .AWSBatchJobsParam allows use AWS EC2 as Clusters
+
+The .AWSBatchJobsParam class extends the BatchJobsParam class to
+allow usage of AWS EC2-instances for parallel computation. The
+methods follow a style similar to that of BiocParallelParams, with
+bpstart, bpstop, bpisup, bplapply being the important one.The
+behaviour of these functions is described in the man pages.}
 \section{Fields}{
 
 \describe{

@@ -9,6 +9,3 @@ getAwsAmiId()
 \value{
 Bioconductor release version
 }
-\description{
-Get name of bioconductor release version AMI
-}
