@@ -242,7 +242,7 @@ transferToCluster <-
              localPath,
              remotePath)
 {
-    ## Check if clustername exists  
+    ## Check if clustername exists
     args <- c("put", clustername,
               "--node", paste0(clustername,"-master"),
               "--user", "ubuntu",
@@ -269,7 +269,7 @@ transferFromCluster <-
              remotePath,
              localPath)
 {
-    ## Check if clustername exists  
+    ## Check if clustername exists
     args <- c("get", clustername,
               "--node", paste0(clustername,"-master"),
               "--user", "ubuntu",
@@ -283,7 +283,7 @@ transferFromCluster <-
 
 
 #' Function to return the names of Clusters launched.
-#' 
+#'
 awsParallelListClusters <-
     function()
     {

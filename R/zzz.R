@@ -22,7 +22,7 @@
             call.=FALSE
         )
     })
-}        
+}
 
 .onLoad <-
     function(libname, pkgname)

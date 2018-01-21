@@ -115,34 +115,28 @@ AWSBatchJobsParam <-
              ...
              )
 {
-    ## Check AWS profile
-    setup <- !missing(awsInstanceType) || !missing(awsSubnet) ||
-        !missing(awsAmiId) || !missing(awsSshKeyPair)
-    ## FIXME: what if awsCredentialsPath doesn't have awsProfile?
-    user <- !missing(starclusterConfigPath) || !missing(startclusterClusterId)
-    ## FIXME: check that clusterId exists in configPath
-
-    if (setup && user)
-        stop("'AWSBatchJobsParam()' requires either 'startclusterConfig*' _or_ 'aws*' arguments", call.=FALSE)
-    if (!setup && !user) {
-        if (is.null(workers))
-            workers <- 0L
-        return(.AWSBatchJobsParam(BatchJobsParam(...), workers=workers))
-    }
-    stopifnot(
-        length(awsProfile) == 1L, is.character(awsProfile)
-    )
-    if (.Platform$OS.type == "windows")
+    ## Zero Check: Cannot support Windows.
+    if (.Platform$OS.type == "windows") {
         stop("'AWSBatchJobsParam' not supported on Windows")
+    }
+    # ## Zero Check: Cannot work without either starcluster config or AWS credentials
+    # test <- (file.exists(starclusterConfigPath) &&
+    #              file.exists(awsCredentialsPath))
+    # if (!test) {
+    #     stop("'AWSBatchJobsParam()' requires either 'startclusterConfig*' _or_ 'aws*' arguments",
+    #              call.=FALSE)
+    # }
 
-    ## Validate AWS Credentials Path
+    ## Zero Check: Cannot work without AWS credentials
+    credentialCheck <- file.exists(awsCredentialsPath) &&
+                        any(grepl(awsProfile, readLines(awsCredentialsPath)))
+    if (!credentialCheck) {
+        stop("AWS credentials with a valid profile is required. ?AWSBatchJobsParam")
+    }
+
+    ## First check: If starcluster config exists use that
     if (file.exists(starclusterConfigPath))
     {
-        if (!missing(awsInstanceType)) {
-            warning(
-                "'awsInstanceType' ignored when 'starclusterConfigPath' exists"
-            )
-        }
         ## read config
         config <- read.ini(starclusterConfigPath)
         clusterId <- paste("cluster", startclusterClusterId)
@@ -155,28 +149,23 @@ AWSBatchJobsParam <-
             config, clusterId, "CLUSTER_SIZE", workers
         )
         cidr_ip <- config[["permission http"]][["CIDR_IP"]]
-        ## FIXME:
-        ## allow function arguments to override config? maybe later
     }
-    ## FIXME: For a later stage
-    #else {
-    #    if (is.na(awsAmiId))
-    #        awsAmiId <- getStarclusterAmiId()
-    #    if (is.na(awsSubnet))
-    #        ## If on a master node
-    #        awsSubnet <- .awsDetectSubnetOnMaster()
-    #}
 
-    stopifnot(
-        length(awsInstanceType) == 1L, !is.na(awsInstanceType),
-        length(awsSubnet) == 1L, !is.na(awsSubnet),
-        length(awsAmiId) == 1L, !is.na(awsAmiId),
-        length(awsSshKeyPair) == 1L, !is.na(awsSshKeyPair)
-    )
+    ## Second Check:
+    ## If any of the AWS requirements are missing, if they are
+    ## initialize with empty values
+    setup <- !missing(awsInstanceType) || !missing(awsSubnet) ||
+        !missing(awsAmiId) || !missing(awsSshKeyPair)
 
-    ## If missing, default to release version of AMI
-    ## FIXME: this AMI ID needs to be for starcluster AMI
+    ## If workers are null give an integer value of 0
+    if (!setup){
+        if (is.null(workers)) {
+            workers <- 0L
+        }
+        awsInstanceType = awsSubnet = awsAmiId = awsSshKeyPair = ""
+    }
 
+    ## ELSE, if arguments are given, use arguments
     ## Initiate .AWSBatchJobsParam class
     x <- .AWSBatchJobsParam(
         BatchJobsParam(...),
@@ -190,8 +179,9 @@ AWSBatchJobsParam <-
         awsProfile = awsProfile
     )
     validObject(x)
-    x
+    return(x)
 }
+
 
 
 #' Get AWS Instance type.
@@ -291,11 +281,11 @@ awsProfile <-
 #' or start a new or existing cluster on the user's AWS account. Once
 #' a cluster is up an running, it should be safely suspended or terminated
 #' using functionality like 'bpsuspend' and 'bpteardown'. NOTE: This function
-#' takes a while to process, depending on the number of workers needed 
+#' takes a while to process, depending on the number of workers needed
 #' it may take upto 4-5 minutes.
-#' 
 #'
-#' 
+#'
+#'
 #' @param x AWSBatchJobsParam object
 #' @param clustername character value given to the cluster.
 #' @export
@@ -321,7 +311,7 @@ bpsetup <-
     transferToCluster(clustername, "~/.starcluster/config",
                       "~/.starcluster/config")
     ## Register AWSBatchJobsParam in the BiocParallelRegistry
-    
+
 }
 
 #' Suspend an AWS EC2 cluster started using bpsetup

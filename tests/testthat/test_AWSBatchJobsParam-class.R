@@ -67,6 +67,8 @@ test_that("AWSBatchJobsParam accepts starclusterConfigPath", {
     expect_identical(awsInstanceType(aws), "t2.micro")
 })
 
+## This test case works only if .starcluster/config is missing from the machine
+## Expect it to fail if the tests are run with
 test_that("AWSBatchJobsParam .onLoad() works", {
     .registerOnStartup <- AWSParallel:::.registerOnStartup
 
