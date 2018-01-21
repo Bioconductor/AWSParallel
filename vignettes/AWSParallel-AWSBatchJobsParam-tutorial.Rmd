@@ -157,6 +157,8 @@ bpsuspend(aws)
 bpteardown(aws)
 ```
 
+## Use AWS Cluster
+
 Once the cluster is setup, you should log into your master node of you AWS 
 cluster. This can be done using the following step on your host's command line.
 
@@ -195,6 +197,8 @@ Once you are done with submitting jobs on the AWS cluster, you need to suspend,
 or teardown, to avoid being charged by amazon when it is not in use. This is done
 on the HOST machine again.
 
+## Teardown AWS Cluster
+
 ```{r, eval=FALSE}
 bpteardown(aws)
 ```
@@ -203,13 +207,13 @@ bpteardown(aws)
 
 Settings required to get the package working on AWS.
 
-## Get AWS Credntials
+## Get AWS Credentials
 
 To use AWSParallel, AWS credentials are a requirement. The credentials
 are given through [AWS Identity and Access management - IAM][]. The
 user needs an AWS access key and an AWS secret key.
 
-These AWS credntials should be stored on your machine accessible at
+These AWS credentials should be stored on your HOST machine accessible at
 `~/.aws/credentials`, as given in the documentation for
 [configuring AWS credentials][].
 
@@ -229,8 +233,15 @@ components of the AWS account,
    activate/deactivate credentials for security reasons.
 1. VPC - This is used to detect VPC's in the region, so that all the
    instances launched are within the same VPC, and same subnet.
-1. EC2 - This is used to launch, run, and terminate instances as
+1. EC2 - This is used to launch, run, stop, and terminate instances as
    needed.
+
+## AWS Profile
+
+The setting `[default]` which you see on the AWS credentials, determines
+the profile of the AWS credentials. If you have multiple profiles,
+be sure to specify the correct profile in the argument to instantiate
+the AWSBatchJobsParam. 
 
 ## AWS Key Pair
 
@@ -241,20 +252,14 @@ the machine being used. The Key Pair can be created using the
 It can also be done programmatically using the `AWSParallel` package
 but the functionality is imported from `aws.ec2`.
 
-```{r eval=FALSE}
-library(AWSParallel)
-## Use credentials in your ~/.aws/crentials file
-aws.signature::use_credentials()
-## This saves the `.pem` file in your your path ~/AWSParallel-keypair.pem
-aws.ec2::create_keypair(
-    keypair = "AWSParallel-key", path="~/AWSParallel-keypair.pem"
-)
-
-## Key pair to be passed in to your AWSSnowParam class
-awsSshKeyPair = "~/AWSParallel-keypair.pem"
+```
+starcluster createkey mykey
 ```
 
-## VPC and Subnet (Optional)
+The same key pair needs to be passed to your AWSBatchJobsParam. Notice
+that I pass in the same key "mykey" to my AWSBatchJobsParam as well.
+
+## Subnet
 
 Every AWS account has a default *VPC* created when the account is
 started. This VPC is usually contained to one AWS Region. Most of the
@@ -263,117 +268,45 @@ starting your account with a VPC located in that region makes most
 sense.
 
 If the VPC is created(by the user or amazon default), the account gets
-*Subnets* as well by default. For the `AWSSnowParam` class to be
+*Subnets* as well by default. For the `AWSBatchJobsParam` class to be
 created, the user has to specify the Subnet. If the subnet is not
 given, we use, the first one on the AWS account.
 
-*NOTE:* The *master* instance and the *worker* instances need to be on
-the same VPC and subnet with permissible security groups. Without this
-the socket connection established with other machines launched on AWS
-does not work well.
+*NOTE:* The HOST, the  *master* instance, and the *worker* instances 
+need to be on the same VPC and subnet with permissible security groups.
+Without this the connection established between the machines 
+launched on AWS does not work.
 
-## Security Group settings (Optional)
+# Working with the AWSParallel - AWSBatchJobsParam
 
-Security groups are probably the most important AWS setting required
-in AWSParallel. It's easier if
+This section describes the usage of AWSBatchJobsParam in a more
+detailed way. The steps below highlight the ideal way to use this
+package.
 
-![Security Group Inbound Rules](inbound_rules.png)
+## Starting a HOST instance on AWS
 
-![Security Group Outbound Rules](outbound_rules.png)
+The user needs to start a HOST instance on AWS directly from his
+AWS account using the AWS UI to set up the host. This host instance 
+will be used as an interface to control the AWS Cluster.
 
+The HOST instance is just a machine to interact with your AWSCluster.
+It also allows windows users to be able to use the AWSParallel package
+without any issues.
 
-Once you have the following AWS components set up, you are ready to
-use the package
-
-# Working with the package AWSParallel
-
-We need to launch the Bioconductor AMI for the *release* version. Do
-this by creating an `AWSSnowParam` object
-
-FIXME: this code chunk should be written to be evaluated
-
-```{r, eval = FALSE}
-## Load the package
-library(AWSParallel)
-
-## bioc-release 3.6 as found in https://www.bioconductor.org/config.yaml
-image <- "ami-a90c23cc"
-
-## Number of workers to be started in the AWS cluster
-workers = 4
-
-## Set the AWS SSH key pair for your machine, or
-## If you already have a keypair, just set the path_to_key, to the pem file.
-path_to_key = "~/aws-parallel.pem"
-
-## TODO: This can also be automated
-awsSshKeyPair = aws.ec2::create_keypair("AWSParallelKeyPair", path_to_key)
-
-## 
-sg <- "sg-748dcd07"
-subnet <- "subnet-d66a05ec"
-
-## Create AWS instance
-aws <- AWSSnowParam(
-    workers=workers,
-    awsInstanceType="t2.micro",
-    awsSubnet = subnet,
-    awsSecurityGroup = sg,
-    awsAmiId= image,
-    awsSshKeyPair = path_to_key,
-    awsCredentialsPath="/home/ubuntu/credentials"
-    )
-
-aws
-## Check if instance is up,
-awsInstanceStatus(aws)
-
-```
-
-Then perform diagnostics, start, use, and stop the cluster
-
-```{r, eval=FALSE}
-## Chunk is supposed to eval onMas
-## Start instance
-bpstart(aws)
-
-## Return cluster which was started
-awsCluster()
-
-## Check is instance is up
-awsInstanceStatus(aws)
-
-## start an AWSParam job
-bplapply(1:4, function(i) system("hostname", intern=TRUE), BPPARAM=aws)
-
-## Stop aws instance
-bpstop(aws)
-```
-
-# Choosing AWS EC2 Instance Size
-
-The size of an AWS-EC2 Instance gives you access to the required
-amount of compute power. Larger instances usually have a higher
-capacity for computing, but also cost more money. The [AWS Pricing][]
-is given in the documentation, and we recommend you take a look at it.
-
-The Bioconductor AMI's have been built using the *m4.xlarge*
-machine. So ideally to run a large computation, and use every package
-available in Bioconductor you would use your worker of size
-*m4.xlarge*. If you are using a limited set of packages, or you just
-need to run a job in parallel, it would be easier to take a look at
-the [Instance types][] and decide the appropriate size for your needs.
-
-
-# Steps to prepare master instance.
+### Steps to prepare HOST instance.
 
 This process can be done ONE time, and the instance can be stopped
-without being terminated. This *master* instance can be reused.
+without being terminated. This **HOST** instance can be reused.
 
-1. Create a new amazon EC2 instance which is going to be the *master*
-   node, by choosing the AMI-ID from this page,
-   http://bioconductor.org/help/bioconductor-cloud-ami/#ami_ids. Follow
-   the steps in the ec2 management console to launch the image.
+1. Create a new amazon EC2 instance which is going to be the **HOST**
+   node, by choosing the AMI-ID with starcluster and bioc-devel, as 
+   given on this page,
+   http://bioconductor.org/help/bioconductor-cloud-ami/#ami_ids.
+   
+    The size of the HOST can be a t2. micro, which is a free tier
+    of the AWS instance sizes. 
+
+    Follow the steps in the ec2 management console to launch the image. 
 
     ![Choose EC2 Instance Type](choose-instance-type.png)
 
@@ -385,17 +318,18 @@ without being terminated. This *master* instance can be reused.
     already. This can be done using this [AWS-EC2 interface][]
     console.
 
-    ![Review and launch your master instance](review-and-launch.png)
+    ![Review and launch your HOST instance](review-and-launch.png)
 
-1. Name your master instance. This is important for getting your
-   instances settings. Call it "AWSParallelMaster"
+1. Name your HOST instance. This is important for getting your
+   instances settings. Call it "AWSParallelHOST", to make it easier
+   to recognize.
 
 1. SSH into the instance, which will be 
 
-        ssh -i ~/.ssh/AWSparallel-test-keypair.pem ubuntu@34.239.248.175
+        ssh -i ~/.ssh/mykey.pem ubuntu@34.239.248.175
     
 1. Once you are logged in, there are a few things you need to set
-   up. Install the `AWSParallel` package in your R prompt.
+   up. Install or update the `AWSParallel` package in your R prompt.
 
         biocLite(`AWSParallel`)
     
@@ -414,17 +348,102 @@ without being terminated. This *master* instance can be reused.
    well. The `.pem` file needs to have permissions to read only, i.e
    run `chmod 400 AWSparallel-test-keypair.pem` if you get a
    permissions error.
-   
+ 
+
+### HOST instance size
+
+Choosing a **t2.micro** is enough for this instance, as it is only required to switch on and off your AWS Cluster. 
+
+If you have data which needs to be used on the AWS Cluster, you'd transfer it on to the HOST before you teardown(terminate) your AWS Cluster. Remember the storage size has no relation with instance compute size. If you add a storage volume to you t2.micro, it will cost money, and does not remain in the free tier anymore.
+
+## Functionality of HOST instance
+
+### bpstart()
+
+It used to start an AWS Cluster and takes as an argument the AWSBatchJobsParam object, which needs to be initialized with the correct credentials.
+
+The output of a successful `bpstart()` is quite verbose as it acts as the interface to starcluster and the users AWS account to start the master and worker nodes, and set them up with the correct configuration.
+
+```{r, eval=FALSE}
+bpstart(aws)
+```
+
+### bpsuspend()
+
+If the user intends to reuse the AWS Cluster after finishing the compute jobs, the cluster can be suspended and restarted at a later time. The **bpsuspend** functionality is similar to the **stop** in the AWS account.  
+
+```{r, eval=FALSE}
+bpsuspend(aws)
+```
+
+### bpresume()
+
+Resume your AWS Cluster from the HOST machine using `bpresume` with the registered AWS param.
+
+When you log into your HOST node, your object for your AWSBatchJobsParam should register automatically after loading the `library(AWSParallel)`. It should be the first object in your registry.
+
+`bpresume` will fail if the cluster was previously torn down. You might have to `bpsetup` again.
+
+```{r, eval=FALSE}
+library(AWSParallel)
+aws <- registered()[[1]]
+bpresume(aws)
+```
+
+### bpteardown()
+
+Purge your AWS cluster from the HOST, using `bpteardown`. This removes the master and the worker nodes. Remember that there is no coming back after this step, your cluster is permanently lost.
+
+```{r, eval=FALSE}
+bpteardown(aws)
+```
+
+## Using AWS Cluster from HOST instance
+
+Start by SSH-ing into to the master node of your AWS Cluster
+
+```
+starcluster sshmaster -u ubuntu awsparallel
+```
+
+## Using AWS Cluster from MASTER mode
+
+Once you are logged into the master node of your AWS cluster, you can start an R session and start sending jobs through the AWSBatchJobsParam available on your registry. 
+
+```{r, eval=FALSE}
+library(AWSParallel)
+
+aws <- registered()[[1]]
+
+FUN  <- function(i) system("hostname", intern=TRUE)
+
+xx  <- bplapply(1:100, FUN, BPPARAM=aws)
+
+table(unlist(xx))
+```
+
+### Choosing AWS EC2 Instance Size -- MASTER
+
+The size of an AWS-EC2 Instance gives you access to the required
+amount of compute power. Larger instances usually have a higher
+capacity for computing, but also cost more money. The [AWS Pricing][]
+is given in the documentation, and we recommend you take a look at it.
+
+The Bioconductor AMI's have been built using the *m4.xlarge*
+machine. So ideally to run a large computation, and use every package
+available in Bioconductor you would use your worker of size
+*m4.xlarge*. If you are using a limited set of packages, or you just
+need to run a job in parallel, it would be easier to take a look at
+the [Instance types][] and decide the appropriate size for your needs.
+
+
+### Choosing AWS EC2 Instance size -- WORKER
+
+The size of the master and worker nodes are going to be the same in this version of the package. In the following releases we will allow for master and workers to be of different size.
    
 # Instructions for Windows machines.
 
-For windows machines, we recommend that you manually follow the steps to 
-prepare a master instance instead of using the `awsLaunchMasterOnEc2` function.
-
-Once you prepare the master instance, and are able to establish an SSH 
-connection to the master you may use the rest of the package as described 
-without any difference because of the platform.
-
+There should be no difference for a windows user vs any other operating system as the entire process takes place in the AWS ecosystem.
 
 # Advanced Tips
 
@@ -435,12 +454,8 @@ to start your AWSParallel param.
 1. Give the AWSParallel param, the new subnet, and a security group as described
 in the security group section.
 
-1. If you want to get the verbose output of the SSH connections being
-   attempted to your worker nodes, please use the option
-   `verbose=TRUE` when making your AWSSnowParam object.
-
 1. It is important that this cluster configuration is used only to launch parallel
-jobs. If you launch a large job on the "master" node, there is no increment in speed.
+jobs. If you launch a large job only on the "master" node, there is no increment in speed if the job is not parallelized.
 It is vital that large jobs are not launched on the master node.
 
 
