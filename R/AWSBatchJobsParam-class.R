@@ -310,8 +310,7 @@ bpsetup <-
     ## Once cluster is started transfer config file to master node
     transferToCluster(clustername, "~/.starcluster/config",
                       "~/.starcluster/config")
-    ## Register AWSBatchJobsParam in the BiocParallelRegistry
-
+    ## FIXME: bpresume might be needed here
 }
 
 #' Suspend an AWS EC2 cluster started using bpsetup
@@ -335,6 +334,20 @@ bpsuspend <-
              "account for these instances.")
     }
 }
+
+## FIXME: If awsparallel cluster already exists, when bpsetup is called,
+## trigger bpresume
+bpresume  <- 
+    function(x, clustername="awsparallel")
+    {
+        args <- c("restart", clustername)
+        res <- system2("starcluster", args=args)
+        ## Throw error if unsuccessful
+        if (res != 0) {
+            stop("Error resuming cluster. Please check your AWS",
+                 "account to see if they have been terminated instead.")
+        }
+    }
 
 
 #' Teardown permanently (TERMINATE) the AWS cluster.
