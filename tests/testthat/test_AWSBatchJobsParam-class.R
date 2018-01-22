@@ -84,7 +84,6 @@ test_that("AWSBatchJobsParam .onLoad() works", {
 test_that("AWSBatchJobsParam .onLoad works, aws values nchar==0", {
     .registerOnStartup <- AWSParallel:::.registerOnStartup
 
-
     expect_warning(
         .registerOnStartup(),
         "'AWSBatchJobsParam\\(\\)' registered without starcluster conf"
