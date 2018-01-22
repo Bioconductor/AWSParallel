@@ -1,3 +1,4 @@
+
 #' Reference class .AWSBatchJobsParam allows use AWS EC2 as Clusters
 #'
 #' The .AWSBatchJobsParam class extends the BatchJobsParam class to allow
@@ -119,19 +120,16 @@ AWSBatchJobsParam <-
     if (.Platform$OS.type == "windows") {
         stop("'AWSBatchJobsParam' not supported on Windows")
     }
-    # ## Zero Check: Cannot work without either starcluster config or AWS credentials
-    # test <- (file.exists(starclusterConfigPath) &&
-    #              file.exists(awsCredentialsPath))
-    # if (!test) {
-    #     stop("'AWSBatchJobsParam()' requires either 'startclusterConfig*' _or_ 'aws*' arguments",
-    #              call.=FALSE)
-    # }
 
+    ## FIXME: On master node, when library(AWSParallel) is called, it does not need valid aws credntials to launch jobs.
     ## Zero Check: Cannot work without AWS credentials
-    credentialCheck <- file.exists(awsCredentialsPath) &&
-                        any(grepl(awsProfile, readLines(awsCredentialsPath)))
-    if (!credentialCheck) {
-        stop("AWS credentials with a valid profile is required. ?AWSBatchJobsParam")
+    if (!file.exists(starclusterConfigPath)) {
+        credentialCheck <- file.exists(awsCredentialsPath) &&
+            any(grepl(awsProfile, readLines(awsCredentialsPath)))
+        if (!credentialCheck) {
+            stop("'AWSBatchJobsParam()' requires either 'startclusterConfig*' _or_ 'aws*' arguments",
+                 call.=FALSE)
+        }
     }
 
     ## First check: If starcluster config exists use that
