@@ -45,56 +45,44 @@ helpful tutorials are pointed out in the *References* section.
 
 # Quick Start
 
-The quick start guide assumes you have your AWS access key, and secret key
-in `~/.aws/credentials`. Please refer to the detailed section of the
-vignette if these settings are not present. We are expecting at this point,
-that you have launched the AMI (FIXME: INSERT AMI NUMBER HERE) provided by Bioconductor.
+The quick start guide assumes you have your AWS access key, and secret
+key in `~/.aws/credentials`. Please refer to the detailed section of
+the vignette if these settings are not present. We are expecting at
+this point, that you have launched the AMI (ami-18c0f562) provided by Bioconductor.
 
-You have to use the AMI created by Bioconductor, which includes starcluster
-and Bioc-devel to use this package. This will be your **HOST** instance
+You have to use the AMI created by Bioconductor, which includes
+starcluster and Bioc-devel to use this package. This will be your
+**HOST** instance.
 
-Load the **AWSParallel** library and create an `AWSBatchJobsParam` object. This
-step is needed to **setup** your cluster on AWS.
+Load the **AWSParallel** library and create an `AWSBatchJobsParam`
+object. This step is needed to **setup** your cluster on AWS.
+
+The AMI required for correct configuration (Bioc-devel with
+starcluster) is "ami-18c0f562".  The AWS credntials are needed on the
+launched instance as well. They need to be in the default location, or
+the path needs to be specified. Specify the instance type of your AWS
+Cluster, the same instance type will apply to your master and
+workers. Specify the subnet you want to use from your AWS account,
+note that the master and workers need to be on the same
+subnet. Specify the SSH key pair, if you don't have a key you use,
+just create a new one for AWSParallel, and use that throughout. The
+quickstart will launch a small instance for demonstration `t2.micro`
+as larger instances cost more money.
 
 ```{r, eval=FALSE}
+## Load the library
 library(AWSParallel)
 
-# Number of workers
-workers = 2
-
-## AMI required for correct configuration (Bioc-devel with starcluster)
-image <- "ami-5121052b"
-
-## The AWS credntials are needed on the AMI as well. They need to be
-## in the default location, or the path needs to be specified.
-credentialsPath = "~/.aws/credentials"
-
-## Specify the instance type of your AWS Cluster, the same instance type
-## will apply to your master and workers. Usually 
-instanceType = "t2.micro"
-
-## Subnet you want to use from your AWS account.
-subnet <- "subnet-d66a05ec"
-
-## SSH key pair
-awsSshKeyPair = getOption("aws_ssh_key_pair")
-
-## If you don't have a key you use, just create a new one
-## for AWSParallel, and use that throughout.
-keyPair <- "mykey"
-
-## Launch a small instance for demonstration `t2.micro`,
-## larger instances cost more money.
-
 ## Construct AWSBatchJobsParam class
-aws <- AWSBatchJobsParam(workers = workers,
-                  awsCredentialsPath = credentialsPath,
-                  awsInstanceType = instanceType,
-                  awsSubnet = subnet,
-                  awsAmiId = image,
-                  awsSshKeyPair = keyPair,
+aws <- AWSBatchJobsParam(workers = 2,
+                  awsCredentialsPath = "~/.aws/credentials",
+                  awsInstanceType = "t2.micro",
+                  awsSubnet = "subnet-d66a05ec",
+                  awsAmiId = "ami-18c0f562",
+                  awsSshKeyPair = "mykey",
                   awsProfile="default")
 
+## Print object to show structure
 aws
 ```
 
@@ -125,23 +113,28 @@ awsDetectMaster <- function()
 onMaster <- awsDetectMaster()
 ```
 
-We now should start an AWS Cluster from our HOST instance. The setup step 
-usually takes a few mins to start the cluster. The code chunk below shows you 
-the functionality of controlling the AWS Cluster from the HOST node. 
+We now should start an AWS Cluster from our HOST instance. The setup
+step usually takes a few mins to start the cluster. The code chunk
+below shows you the functionality of controlling the AWS Cluster from
+the HOST node.
 
 You can **setup** an AWS cluster with a master and a few workers using
-`bpsetup()`. Given that our current configuration has `workers=2`, the cluster
-contains **1 master** and **1 worker** node. This step produces quite a bit of
-verbose output about the launch of your cluster (don't be alarmed).
+`bpsetup()`. Given that our current configuration has `workers=2`, the
+cluster contains **1 master** and **1 worker** node. This step
+produces quite a bit of verbose output about the launch of your
+cluster (don't be alarmed).
 
-You can **suspend** the AWS cluster using `bpsuspend()`, this stops your AWS
-cluster but does not terminate the instances in the cluster.
+You can **suspend** the AWS cluster using `bpsuspend()`, this stops
+your AWS cluster but does not terminate the instances in the cluster.
 
-You can **teardown** or terminate the AWS cluster using `bpteardown()`, this
-will terminate your AWS cluster and remove any data on the master or worker
-nodes that are not saved. You should use this option with caution.
+You can **teardown** or terminate the AWS cluster using
+`bpteardown()`, this will terminate your AWS cluster and remove any
+data on the master or worker nodes that are not saved. You should use
+this option with caution.
 
 ## Setup AWS Cluster
+
+Setup the AWS cluster using `bpsetup`
 
 ```{r conditional, eval=FALSE}
 
@@ -149,30 +142,23 @@ nodes that are not saved. You should use this option with caution.
 bpsetup(aws)
 ```
 
-```{r, eval=FALSE}
-## Suspend AWS cluster, this command is not being run.
-bpsuspend(aws)
-
-## Terminate or teardown AWS cluster, this command is not being run.
-bpteardown(aws)
-```
-
 ## Use AWS Cluster
 
-Once the cluster is setup, you should log into your master node of you AWS 
-cluster. This can be done using the following step on your host's command line.
+Once the cluster is setup, you should log into your master node of you
+AWS cluster. This can be done using the following step on your host's
+command line.
 
-_NOTE_: This is not an R command, you need to exit your R session and use this 
-command once your AWS Cluster has successfully launched. If this command fails,
-then your key has not been setup properly or the previous previous commands 
-haven't been used correctly.
+_NOTE_: This is not an R command, you need to exit your R session and
+use this command once your AWS Cluster has successfully launched. If
+this command fails, then your key has not been setup properly or the
+previous previous commands haven't been used correctly.
 
 ```
 starcluster sshmaster -u ubuntu awsparallel
 ```
 
-Once you have logged into your **master** node, you may launch your jobs on
-the cluster. Start a new R session,
+Once you have logged into your **master** node, you may launch your
+jobs on the cluster. Start a new R session,
 
 ```{r, eval=FALSE}
 ## Load the AWSParallel library
@@ -193,11 +179,13 @@ xx <- bplapply(1:100, FUN, BPPARAM = aws)
 table(unlist(xx))
 ```
 
-Once you are done with submitting jobs on the AWS cluster, you need to suspend,
-or teardown, to avoid being charged by amazon when it is not in use. This is done
-on the HOST machine again.
+Once you are done with submitting jobs on the AWS cluster, you need to
+suspend, or teardown, to avoid being charged by amazon when it is not
+in use. This is done on the HOST machine again.
 
 ## Teardown AWS Cluster
+
+Teardown or terminate the cluster once you have finished using it.
 
 ```{r, eval=FALSE}
 bpteardown(aws)
@@ -213,8 +201,8 @@ To use AWSParallel, AWS credentials are a requirement. The credentials
 are given through [AWS Identity and Access management - IAM][]. The
 user needs an AWS access key and an AWS secret key.
 
-These AWS credentials should be stored on your HOST machine accessible at
-`~/.aws/credentials`, as given in the documentation for
+These AWS credentials should be stored on your HOST machine accessible
+at `~/.aws/credentials`, as given in the documentation for
 [configuring AWS credentials][].
 
 Example AWS credentials, which need to be in the file,
@@ -238,10 +226,10 @@ components of the AWS account,
 
 ## AWS Profile
 
-The setting `[default]` which you see on the AWS credentials, determines
-the profile of the AWS credentials. If you have multiple profiles,
-be sure to specify the correct profile in the argument to instantiate
-the AWSBatchJobsParam. 
+The setting `[default]` which you see on the AWS credentials,
+determines the profile of the AWS credentials. If you have multiple
+profiles, be sure to specify the correct profile in the argument to
+instantiate the AWSBatchJobsParam.
 
 ## AWS Key Pair
 
@@ -272,9 +260,9 @@ If the VPC is created(by the user or amazon default), the account gets
 created, the user has to specify the Subnet. If the subnet is not
 given, we use, the first one on the AWS account.
 
-*NOTE:* The HOST, the  *master* instance, and the *worker* instances 
-need to be on the same VPC and subnet with permissible security groups.
-Without this the connection established between the machines 
+*NOTE:* The HOST, the *master* instance, and the *worker* instances
+need to be on the same VPC and subnet with permissible security
+groups.  Without this the connection established between the machines
 launched on AWS does not work.
 
 # Working with the AWSParallel - AWSBatchJobsParam
@@ -285,9 +273,9 @@ package.
 
 ## Starting a HOST instance on AWS
 
-The user needs to start a HOST instance on AWS directly from his
-AWS account using the AWS UI to set up the host. This host instance 
-will be used as an interface to control the AWS Cluster.
+The user needs to start a HOST instance on AWS directly from his AWS
+account using the AWS UI to set up the host. This host instance will
+be used as an interface to control the AWS Cluster.
 
 The HOST instance is just a machine to interact with your AWSCluster.
 It also allows windows users to be able to use the AWSParallel package
@@ -299,7 +287,7 @@ This process can be done ONE time, and the instance can be stopped
 without being terminated. This **HOST** instance can be reused.
 
 1. Create a new amazon EC2 instance which is going to be the **HOST**
-   node, by choosing the AMI-ID with starcluster and bioc-devel, as 
+   node, by choosing the AMI-ID with starcluster and bioc-devel, as
    given on this page,
    http://bioconductor.org/help/bioconductor-cloud-ami/#ami_ids.
    
@@ -352,17 +340,27 @@ without being terminated. This **HOST** instance can be reused.
 
 ### HOST instance size
 
-Choosing a **t2.micro** is enough for this instance, as it is only required to switch on and off your AWS Cluster. 
+Choosing a **t2.micro** is enough for this instance, as it is only
+required to switch on and off your AWS Cluster.
 
-If you have data which needs to be used on the AWS Cluster, you'd transfer it on to the HOST before you teardown(terminate) your AWS Cluster. Remember the storage size has no relation with instance compute size. If you add a storage volume to you t2.micro, it will cost money, and does not remain in the free tier anymore.
+If you have data which needs to be used on the AWS Cluster, you'd
+transfer it on to the HOST before you teardown(terminate) your AWS
+Cluster. Remember the storage size has no relation with instance
+compute size. If you add a storage volume to you t2.micro, it will
+cost money, and does not remain in the free tier anymore.
 
 ## Functionality of HOST instance
 
 ### bpstart()
 
-It used to start an AWS Cluster and takes as an argument the AWSBatchJobsParam object, which needs to be initialized with the correct credentials.
+It used to start an AWS Cluster and takes as an argument the
+AWSBatchJobsParam object, which needs to be initialized with the
+correct credentials.
 
-The output of a successful `bpstart()` is quite verbose as it acts as the interface to starcluster and the users AWS account to start the master and worker nodes, and set them up with the correct configuration.
+The output of a successful `bpstart()` is quite verbose as it acts as
+the interface to starcluster and the users AWS account to start the
+master and worker nodes, and set them up with the correct
+configuration.
 
 ```{r, eval=FALSE}
 bpstart(aws)
@@ -370,7 +368,10 @@ bpstart(aws)
 
 ### bpsuspend()
 
-If the user intends to reuse the AWS Cluster after finishing the compute jobs, the cluster can be suspended and restarted at a later time. The **bpsuspend** functionality is similar to the **stop** in the AWS account.  
+If the user intends to reuse the AWS Cluster after finishing the
+compute jobs, the cluster can be suspended and restarted at a later
+time. The **bpsuspend** functionality is similar to the **stop** in
+the AWS account.
 
 ```{r, eval=FALSE}
 bpsuspend(aws)
@@ -378,11 +379,16 @@ bpsuspend(aws)
 
 ### bpresume()
 
-Resume your AWS Cluster from the HOST machine using `bpresume` with the registered AWS param.
+Resume your AWS Cluster from the HOST machine using `bpresume` with
+the registered AWS param.
 
-When you log into your HOST node, your object for your AWSBatchJobsParam should register automatically after loading the `library(AWSParallel)`. It should be the first object in your registry.
+When you log into your HOST node, your object for your
+AWSBatchJobsParam should register automatically after loading the
+`library(AWSParallel)`. It should be the first object in your
+registry.
 
-`bpresume` will fail if the cluster was previously torn down. You might have to `bpsetup` again.
+`bpresume` will fail if the cluster was previously torn down. You
+might have to `bpsetup` again.
 
 ```{r, eval=FALSE}
 library(AWSParallel)
@@ -390,9 +396,14 @@ aws <- registered()[[1]]
 bpresume(aws)
 ```
 
+NOTE: `bpresume` is not currently functional. It will be operational
+in other iterations of the package.
+
 ### bpteardown()
 
-Purge your AWS cluster from the HOST, using `bpteardown`. This removes the master and the worker nodes. Remember that there is no coming back after this step, your cluster is permanently lost.
+Purge your AWS cluster from the HOST, using `bpteardown`. This removes
+the master and the worker nodes. Remember that there is no coming back
+after this step, your cluster is permanently lost.
 
 ```{r, eval=FALSE}
 bpteardown(aws)
@@ -408,7 +419,9 @@ starcluster sshmaster -u ubuntu awsparallel
 
 ## Using AWS Cluster from MASTER mode
 
-Once you are logged into the master node of your AWS cluster, you can start an R session and start sending jobs through the AWSBatchJobsParam available on your registry. 
+Once you are logged into the master node of your AWS cluster, you can
+start an R session and start sending jobs through the
+AWSBatchJobsParam available on your registry.
 
 ```{r, eval=FALSE}
 library(AWSParallel)
@@ -439,23 +452,28 @@ the [Instance types][] and decide the appropriate size for your needs.
 
 ### Choosing AWS EC2 Instance size -- WORKER
 
-The size of the master and worker nodes are going to be the same in this version of the package. In the following releases we will allow for master and workers to be of different size.
+The size of the master and worker nodes are going to be the same in
+this version of the package. In the following releases we will allow
+for master and workers to be of different size.
    
 # Instructions for Windows machines.
 
-There should be no difference for a windows user vs any other operating system as the entire process takes place in the AWS ecosystem.
+There should be no difference for a windows user vs any other
+operating system as the entire process takes place in the AWS
+ecosystem.
 
 # Advanced Tips
 
-1. If you choose to keep your cluster isolated from any other work you have 
-going on your VPC. Please create a new VPC and use the subnets in that VPC
-to start your AWSParallel param.
+1. If you choose to keep your cluster isolated from any other work you
+have going on your VPC. Please create a new VPC and use the subnets in
+that VPC to start your AWSParallel param.
 
-1. Give the AWSParallel param, the new subnet, and a security group as described
-in the security group section.
+1. Give the AWSParallel param, the new subnet, and a security group as
+described in the security group section.
 
-1. It is important that this cluster configuration is used only to launch parallel
-jobs. If you launch a large job only on the "master" node, there is no increment in speed if the job is not parallelized.
+1. It is important that this cluster configuration is used only to
+launch parallel jobs. If you launch a large job only on the "master"
+node, there is no increment in speed if the job is not parallelized.
 It is vital that large jobs are not launched on the master node.
 
 
