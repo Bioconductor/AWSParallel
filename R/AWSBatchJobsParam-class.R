@@ -308,7 +308,6 @@ bpsetup <-
     ## Once cluster is started transfer config file to master node
     transferToCluster(clustername, "~/.starcluster/config",
                       "~/.starcluster/config")
-    ## FIXME: bpresume might be needed here
 }
 
 #' Suspend an AWS EC2 cluster started using bpsetup
@@ -318,12 +317,16 @@ bpsetup <-
 #' terminate the cluster. The clustername should match the argument
 #' used in bpstart.
 #'
+#' NOTE: bpsuspend stops the cluster, but it loses connection to resume it.
+#' Please refrain from using bpsuspend.
+#'
 #' @param x AWSBatchJobsParam object
 #' @param clustername character value given to the cluster.
 #' @export
 bpsuspend <-
     function(x, clustername="awsparallel")
 {
+    warning("If you use 'bpsuspend()', you cannot restart the cluster using 'bpresume()', please check ?bpsuspend")
     args <- c("stop", "--confirm", clustername)
     res <- system2("starcluster", args=args)
     ## Throw error if unsuccessful
@@ -335,9 +338,12 @@ bpsuspend <-
 
 ## FIXME: If awsparallel cluster already exists, when bpsetup is called,
 ## trigger bpresume
-bpresume  <- 
+## FIXME: This is not working because of a starcluster bug, 
+## "ERROR: No master node found!"
+bpresume <-
     function(x, clustername="awsparallel")
     {
+        stop("bpresume, does NOT work at this time")
         args <- c("restart", clustername)
         res <- system2("starcluster", args=args)
         ## Throw error if unsuccessful
@@ -347,6 +353,19 @@ bpresume  <-
         }
     }
 
+## Function to resume cluster
+## bpresume2 <- 
+##     function(x, clustername="awsparallel")
+##     {
+##         ### use credentials
+##         aws.ec2::use_credentials(awsCredentialsPath(aws), profile=awsProfile(awS))
+##         ### Discover instances
+##         instances <- aws.ec2::describe_instances()
+##         ### Find instances with "name" containing clustername
+##         awsList <- ## List of nodes with paste0(clustername, "-master")
+##         ### start instances
+##         run_instances(awsList)
+##     }
 
 #' Teardown permanently (TERMINATE) the AWS cluster.
 #'
