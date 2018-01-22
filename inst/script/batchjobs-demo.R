@@ -12,7 +12,7 @@ credentialsPath = "~/.aws/credentials"
 instanceType = "t2.micro"
 subnet <- "subnet-d66a05ec"
 ## Bioc-devel with starcluster
-image <- "ami-5121052b"
+image <- "ami-18c0f562"
 ## If you don't have a key you use, just create a new one
 ## for AWSParallel, and use that throughout.
 keyPair <- "mykey"
@@ -33,8 +33,12 @@ aws
 ## Setup AWS cluster (takes a few mins)
 bpsetup(aws)
 
+## SUSPEND WORKS BUT STARCLUSTER HAS AN ISSUE WITH RESTART, 
 ## Suspend AWS cluster 
 bpsuspend(aws)
+
+## Manually have to start AWS Nodes using CloudyR and finding out the ClusterID
+## bpresume(aws)
 
 ## Terminate or teardown AWS cluster
 bpteardown(aws)

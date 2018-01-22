@@ -31,6 +31,7 @@ CIDR_IP = 172.30.0.0/16"
 starclusterConfigPath <- tempfile()
 writeLines(starcluster_template, starclusterConfigPath)
 
+## AWSBatchJobsParam constructor fails
 test_that("AWSBatchJobsParam constructor fails without starclusterConfig", {
     expect_error(
         AWSBatchJobsParam(
@@ -78,3 +79,22 @@ test_that("AWSBatchJobsParam .onLoad() works", {
     )
 })
 
+
+## Check if the values instantiated with .onLoad are empty values
+test_that("AWSBatchJobsParam .onLoad works, aws values nchar==0", {
+    .registerOnStartup <- AWSParallel:::.registerOnStartup
+
+
+    expect_warning(
+        .registerOnStartup(),
+        "'AWSBatchJobsParam\\(\\)' registered without starcluster conf"
+    )
+    aws <- registered()[[1]]
+    expect_identical(awsInstanceType(aws), "")
+    expect_identical(awsAmiId(aws), "")
+    expect_identical(awsSshKeyPair(aws), "")
+    expect_identical(awsSubnet(aws), "")
+    expect_identical(awsProfile(aws), "default")
+    ## awsCredentialsPath goes to default
+    expect_identical(awsCredentialsPath(aws), .AWS_CREDENTIALS_PATH)
+})
