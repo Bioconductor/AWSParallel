@@ -77,3 +77,4 @@ test_that("AWSBatchJobsParam .onLoad() works", {
         "'AWSBatchJobsParam\\(\\)' registered without starcluster conf"
     )
 })
+

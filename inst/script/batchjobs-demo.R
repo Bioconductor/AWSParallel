@@ -59,12 +59,9 @@ git checkout AWSBatchParam-class
 library(AWSParallel)
 devtools::load_all()
 
-##param <- AWSBatchJobsParam()
-##register(param)
-
-
+aws  <- registered()[[1]]
 FUN <- function(i) system("hostname", intern=TRUE)
-xx <- bplapply(1:100, FUN)
+xx <- bplapply(1:100, FUN, BPPARAM=aws)
 
 table(unlist(xx))
 
