@@ -41,7 +41,7 @@ the vignette if these settings are not present.
 Load the **AWSParallel** library and create an `AWSSnowParam`
 
 
-```{r, eval=TRUE}
+```{r, eval=FALSE}
 library(AWSParallel)
 
 # Number of workers
@@ -90,9 +90,10 @@ awsDetectMaster <- function()
     bool
 }
 
-onMaster <- awsDetectMaster()
+onMaster <- FALSE
 ```
 
+Eval only on master
 
 ```{r conditional, eval = onMaster}
 ## Start instance
@@ -201,7 +202,7 @@ this by creating an `AWSSnowParam` object
 
 FIXME: this code chunk should be written to be evaluated
 
-```{r, eval = TRUE}
+```{r, eval = FALSE}
 ## Load the package
 library(AWSParallel)
 
@@ -241,7 +242,7 @@ awsInstanceStatus(aws)
 
 Then perform diagnostics, start, use, and stop the cluster
 
-```{r, eval=onMaster}}
+```{r, eval=onMaster}
 ## Start instance
 bpstart(aws)
 
